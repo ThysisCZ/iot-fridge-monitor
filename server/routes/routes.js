@@ -13,6 +13,7 @@ const { authenticateToken } = require('../src/middleware/authMiddleware');
 const router = express.Router();
 
 //routes for HTTP requests
+router.route('/auth/register').post(userController.registerUserController);
 
 //export router
 module.exports = router;
