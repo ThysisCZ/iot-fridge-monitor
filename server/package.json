@@ -1,0 +1,34 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "IoT Fridge Monitor backend.",
+  "keywords": [
+    "iot",
+    "fridge",
+    "monitor",
+    "temperature",
+    "humidity",
+    "illuminance"
+  ],
+  "homepage": "https://github.com/ThysisCZ/iot-fridge-monitor#readme",
+  "bugs": {
+    "url": "https://github.com/ThysisCZ/iot-fridge-monitor/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ThysisCZ/iot-fridge-monitor.git"
+  },
+  "license": "ISC",
+  "author": "Thysis",
+  "type": "commonjs",
+  "main": "app.js",
+  "scripts": {
+    "test": "npm test"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.0",
+    "express": "^5.2.1",
+    "mongoose": "^9.3.3"
+  }
+}
