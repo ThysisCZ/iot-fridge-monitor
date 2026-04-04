@@ -14,6 +14,12 @@ const router = express.Router();
 
 //routes for HTTP requests
 router.route('/auth/register').post(userController.registerUserController);
+router.get('/api/fridge/:fridgeId/rules/list', authenticateToken, ruleController.listRules);
+router.post('/api/fridge/:fridgeId/rules/create', authenticateToken, ruleController.createRule);
+router.get('/api/rule/:id', authenticateToken, ruleController.getRule);
+router.patch('/api/rule/update/:id', authenticateToken, ruleController.updateRule);
+router.delete('/api/rule/delete/:id', authenticateToken, ruleController.deleteRule);
+router.get('/api/notification/list', authenticateToken, notificationController.listNotifications);
 
 //export router
 module.exports = router;
