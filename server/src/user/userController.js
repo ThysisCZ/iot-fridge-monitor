@@ -14,7 +14,7 @@ async function registerUserController(req, res) {
 
         res.status(201).send(result);
     } catch (error) {
-        res.status(400).send({ success: false, message: "Registration failed." })
+        res.status(400).send({ success: false, message: "Failed to register the user." })
     }
 }
 
@@ -29,11 +29,39 @@ async function loginUserController(req, res) {
         res.status(200).send(result);
 
     } catch (error) {
-        res.status(401).send({ success: false, message: 'Login failed.' });
+        res.status(401).send({ success: false, message: "Failed to login the user." });
+    }
+};
+
+//logout controller
+async function logoutUserController(req, res) {
+
+    try {
+        const result = await userService.logoutUserService(req);
+
+        res.status(200).send(result);
+
+    } catch (error) {
+        res.status(401).send({ success: false, message: "Failed to logout the user." });
+    }
+};
+
+//user profile controller
+async function getUserController(req, res) {
+
+    try {
+        const result = await userService.getUserService(req);
+
+        res.status(200).send(result);
+
+    } catch (error) {
+        res.status(401).send({ success: false, message: "Failed to retrieve user profile from the database." });
     }
 };
 
 module.exports = {
     registerUserController,
-    loginUserController
+    loginUserController,
+    logoutUserController,
+    getUserController
 }
