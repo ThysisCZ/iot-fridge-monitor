@@ -3,7 +3,7 @@ const revokedTokenModel = require('../user/revokedTokenModel');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
-module.exports = async (req, res, next) => {
+module.exports.authenticateToken = async (req, res, next) => {
     try {
         const authHeader = req.headers['authorization'];
 
