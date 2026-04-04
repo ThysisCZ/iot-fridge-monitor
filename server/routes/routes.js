@@ -13,10 +13,10 @@ const notificationController = require('../src/notification/notificationControll
 const router = express.Router();
 
 //routes for HTTP requests
-router.route('/auth/register').post(userController.registerUserController);
-router.route('/auth/login').post(userController.loginUserController);
-router.route('/auth/logout').post(authMiddleware, userController.logoutUserController);
-router.route('/user/profile').get(authMiddleware, userController.getUserController);
+router.route('/api/auth/register').post(userController.registerUserController);
+router.route('/api/auth/login').post(userController.loginUserController);
+router.route('/api/auth/logout').post(authMiddleware, userController.logoutUserController);
+router.route('/api/user/profile').get(authMiddleware, userController.getUserController);
 
 //export router
 module.exports = router;
