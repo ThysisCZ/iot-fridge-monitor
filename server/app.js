@@ -16,7 +16,7 @@ const URI = `mongodb+srv://thysis:${PASSWORD}@fridge-monitor-cluster.1rrvrzd.mon
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
-app.use(routes);
+app.use('/api', routes);
 
 //connect to database
 mongoose.connect(URI)

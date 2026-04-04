@@ -14,7 +14,7 @@ async function registerUserController(req, res) {
 
         res.status(201).send(result);
     } catch (error) {
-        res.status(400).send({ success: false, message: "Failed to register the user." })
+        res.status(500).send({ success: false, message: "Failed to register the user." })
     }
 }
 
@@ -29,7 +29,7 @@ async function loginUserController(req, res) {
         res.status(200).send(result);
 
     } catch (error) {
-        res.status(401).send({ success: false, message: "Failed to login the user." });
+        res.status(500).send({ success: false, message: "Failed to login the user." });
     }
 };
 
@@ -37,12 +37,14 @@ async function loginUserController(req, res) {
 async function logoutUserController(req, res) {
 
     try {
-        const result = await userService.logoutUserService(req);
+        const token = req.headers['authorization'].split(' ')[1];
+
+        const result = await userService.logoutUserService(token);
 
         res.status(200).send(result);
 
     } catch (error) {
-        res.status(401).send({ success: false, message: "Failed to logout the user." });
+        res.status(500).send({ success: false, message: "Failed to logout the user." });
     }
 };
 
@@ -50,12 +52,12 @@ async function logoutUserController(req, res) {
 async function getUserController(req, res) {
 
     try {
-        const result = await userService.getUserService(req);
+        const result = await userService.getUserService(req.user.id);
 
         res.status(200).send(result);
 
     } catch (error) {
-        res.status(401).send({ success: false, message: "Failed to retrieve user profile from the database." });
+        res.status(500).send({ success: false, message: "Failed to retrieve user profile from the database." });
     }
 };
 

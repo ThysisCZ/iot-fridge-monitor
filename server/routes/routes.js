@@ -1,5 +1,6 @@
 //dependencies
 const express = require('express');
+const authMiddleware = require('../src/middleware/authMiddleware');
 const userController = require('../src/user/userController');
 const gatewayController = require('../src/gateway/gatewayController');
 const monitorController = require('../src/monitor/monitorController');
@@ -14,8 +15,8 @@ const router = express.Router();
 //routes for HTTP requests
 router.route('/auth/register').post(userController.registerUserController);
 router.route('/auth/login').post(userController.loginUserController);
-router.route('/auth/logout').post(userController.logoutUserController);
-router.route('/user/profile').get(userController.getUserController);
+router.route('/auth/logout').post(authMiddleware, userController.logoutUserController);
+router.route('/user/profile').get(authMiddleware, userController.getUserController);
 
 //export router
 module.exports = router;

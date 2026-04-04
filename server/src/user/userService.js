@@ -6,8 +6,7 @@ const userModel = require('./userModel');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const emailService = require('./emailService');
-const redis = require('redis');
-const client = redis.createClient();
+const revokedTokenModel = require('./revokedTokenModel');
 
 //JWT secret key
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -79,7 +78,7 @@ module.exports.loginUserService = (email, password) => {
 
                 foundUser = user;
 
-                return bcrypt.compare(password, user.password);
+                return bcrypt.compare(password, user.passwordHash);
             })
             .then((passwordMatch) => {
 
@@ -89,7 +88,7 @@ module.exports.loginUserService = (email, password) => {
 
                 //create the JWT token
                 const token = jwt.sign(
-                    { id: user._id, email: user.email },
+                    { id: foundUser._id, email: foundUser.email },
                     JWT_SECRET,
                     { expiresIn: '24h' }
                 );
@@ -107,47 +106,45 @@ module.exports.loginUserService = (email, password) => {
     });
 }
 
-function isTokenRevoked(jti, callback) {
-    client.get(jti, (err, reply) => {
-        callback(reply === 'revoked');
-    });
-}
-
 //logout service
-module.exports.logoutUserService = (req) => {
-
+module.exports.logoutUserService = (token) => {
     return new Promise((resolve, reject) => {
-        const token = req.headers['authorization'];
-        const secret = process.env.JWT_SECRET;
-        const decoded = jwt.verify(token, secret);
-        const expiry = 3600;
 
         if (!token) {
-            reject({ message: "Access token required." })
+            reject({ message: "Access token required." });
+            return;
         }
 
-        //check if token is in blacklist
-        isTokenRevoked(decoded.jti, (isRevoked) => {
-            if (isRevoked) {
-                reject('Session is already terminated.');
-            }
-        });
+        //check if token is already revoked
+        revokedTokenModel.findOne({ token: token })
+            .then((revokedToken) => {
+                if (revokedToken) {
+                    reject({ message: "Session is already terminated." });
+                    return;
+                }
 
-        //add token to blacklist
-        then(() => {
-            resolve(client.set(decoded.jti, 'revoked', 'EX', expiry));
-        }).catch((error) => {
-            reject(error);
-        });
+                //add token to revoked tokens
+                const revokedTokenData = new revokedTokenModel();
+                revokedTokenData.token = token;
+
+                return revokedTokenData.save();
+            })
+            .then(() => {
+                resolve({ message: "Logged out successfully." });
+            })
+            .catch((error) => {
+                reject(error);
+            });
     });
-}
+};
 
 //user profile service
 module.exports.getUserService = (id) => {
 
     return new Promise((resolve, reject) => {
         if (!id) {
-            reject({ message: "User is not authenticated." })
+            reject({ message: "User is not authenticated." });
+            return;
         }
 
         //find user by ID
@@ -158,7 +155,11 @@ module.exports.getUserService = (id) => {
                     return;
                 }
 
-                resolve(user);
+                resolve({
+                    id: user._id,
+                    name: user.name,
+                    email: user.email
+                });
             })
             .catch((error) => {
                 reject(error);
