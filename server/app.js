@@ -9,8 +9,9 @@ const mongoose = require('mongoose');
 const routes = require('./routes/routes');
 
 const PORT = 8000;
+const USERNAME = process.env.DB_USER;
 const PASSWORD = process.env.DB_PASS;
-const URI = `mongodb+srv://thysis:${PASSWORD}@fridge-monitor-cluster.1rrvrzd.mongodb.net/?appName=Fridge-Monitor-Cluster`;
+const URI = `mongodb+srv://${USERNAME}:${PASSWORD}@fridge-monitor-cluster.1rrvrzd.mongodb.net/?appName=Fridge-Monitor-Cluster`;
 
 //middleware
 app.use(express.json());
