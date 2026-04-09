@@ -23,6 +23,8 @@ router.get('/api/rule/:id', authenticateToken, ruleController.getRule);
 router.patch('/api/rule/update/:id', authenticateToken, ruleController.updateRule);
 router.delete('/api/rule/delete/:id', authenticateToken, ruleController.deleteRule);
 router.get('/api/notification/list', authenticateToken, notificationController.listNotifications);
+router.post('/api/measurement/ingest', measurementController.measurementIngestController);
+router.get('/api/measurement/:id', measurementController.getMeasurementController);
 
 //export router
 module.exports = router;
