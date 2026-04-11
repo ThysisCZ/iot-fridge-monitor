@@ -12,23 +12,25 @@ const ruleSchema = new mongoose.Schema(
         name: {
             type: String,
             required: true,
-            trim: true
+            trim: true,
+            minLength: 1,
+            maxLength: 20
         },
-        metric: {
+        sensorType: {
             type: String,
             required: true,
-            trim: true
+            trim: true,
+            enum: ['temperature', 'humidity', 'illuminance']
         },
-        operator: {
-            type: String,
-            required: true,
-            trim: true
-        },
-        threshold: {
+        minThreshold: {
             type: Number,
             required: true
         },
-        durationMinutes: {
+        maxThreshold: {
+            type: Number,
+            required: true
+        },
+        durationThreshold: {
             type: Number,
             required: true,
             default: 0

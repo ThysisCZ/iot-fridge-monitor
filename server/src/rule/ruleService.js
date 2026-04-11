@@ -3,11 +3,17 @@ const mongoose = require('mongoose');
 const ruleModel = require('./ruleModel');
 const fridgeModel = require('../fridge/fridgeModel');
 
-const SUPPORTED_METRICS = ['temperature', 'humidity', 'illuminance'];
-const SUPPORTED_OPERATORS = ['>', '>=', '<', '<=', '=', '==', '!='];
-const RULE_CREATE_FIELDS = ['name', 'metric', 'operator', 'threshold', 'durationMinutes', 'isActive'];
-const RULE_UPDATABLE_FIELDS = ['name', 'metric', 'operator', 'threshold', 'durationMinutes', 'isActive'];
+//supported sensor types
+const SUPPORTED_SENSOR_TYPES = ['temperature', 'humidity', 'illuminance'];
 
+//threshold limits per sensor type
+const THRESHOLD_LIMITS = {
+    temperature: { min: -40, max: 70 },
+    humidity: { min: 0, max: 100 },
+    illuminance: { min: 0, max: 10000 }
+};
+
+//helper functions
 const createServiceError = (status, code, message) => {
     const error = new Error(message);
     error.status = status;
@@ -30,18 +36,38 @@ const normalizeRule = (rule) => {
     return dtoOut;
 };
 
+//validate fridge ID
 const validateFridgeId = (fridgeId) => {
     if (!hasRequiredString(fridgeId)) {
         throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
     }
 };
 
+//validate rule ID
 const validateRuleId = (id) => {
     if (!isValidMongoId(id)) {
         throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
     }
 };
 
+//validate threshold values against sensor type limits
+const validateThresholdLimits = (sensorType, minThreshold, maxThreshold) => {
+    const limits = THRESHOLD_LIMITS[sensorType];
+
+    if (minThreshold < limits.min || minThreshold > limits.max) {
+        throw createServiceError(400, 'invalidThreshold', `Minimum threshold for ${sensorType} must be between ${limits.min} and ${limits.max}.`);
+    }
+
+    if (maxThreshold < limits.min || maxThreshold > limits.max) {
+        throw createServiceError(400, 'invalidThreshold', `Maximum threshold for ${sensorType} must be between ${limits.min} and ${limits.max}.`);
+    }
+
+    if (minThreshold >= maxThreshold) {
+        throw createServiceError(400, 'invalidThreshold', 'Minimum threshold must be less than maximum threshold.');
+    }
+};
+
+//validate dtoIn for create rule
 const validateCreateDtoIn = (fridgeId, dtoIn) => {
     validateFridgeId(fridgeId);
 
@@ -49,32 +75,38 @@ const validateCreateDtoIn = (fridgeId, dtoIn) => {
         throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
     }
 
-    if (Object.keys(dtoIn).some((field) => !RULE_CREATE_FIELDS.includes(field))) {
+    if (!hasRequiredString(dtoIn.name) || dtoIn.name.trim().length > 20) {
         throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
     }
 
-    if (
-        !hasRequiredString(dtoIn.name) ||
-        !hasRequiredString(dtoIn.metric) ||
-        !hasRequiredString(dtoIn.operator) ||
-        typeof dtoIn.threshold !== 'number' ||
-        Number.isNaN(dtoIn.threshold)
-    ) {
+    if (!hasRequiredString(dtoIn.sensorType) || !SUPPORTED_SENSOR_TYPES.includes(dtoIn.sensorType.trim().toLowerCase())) {
         throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
     }
 
-    if (
-        dtoIn.durationMinutes !== undefined &&
-        (!Number.isInteger(dtoIn.durationMinutes) || dtoIn.durationMinutes < 0)
-    ) {
+    if (typeof dtoIn.minThreshold !== 'number' || Number.isNaN(dtoIn.minThreshold)) {
+        throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
+    }
+
+    if (typeof dtoIn.maxThreshold !== 'number' || Number.isNaN(dtoIn.maxThreshold)) {
+        throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
+    }
+
+    if (dtoIn.durationThreshold !== undefined && (!Number.isInteger(dtoIn.durationThreshold) || dtoIn.durationThreshold < 0)) {
         throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
     }
 
     if (dtoIn.isActive !== undefined && typeof dtoIn.isActive !== 'boolean') {
         throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
     }
+
+    validateThresholdLimits(
+        dtoIn.sensorType.trim().toLowerCase(),
+        dtoIn.minThreshold,
+        dtoIn.maxThreshold
+    );
 };
 
+//validate dtoIn for update rule
 const validateUpdateDtoIn = (id, dtoIn) => {
     validateRuleId(id);
 
@@ -82,36 +114,27 @@ const validateUpdateDtoIn = (id, dtoIn) => {
         throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
     }
 
-    const providedFields = Object.keys(dtoIn);
-
-    if (providedFields.length === 0) {
+    if (Object.keys(dtoIn).length === 0) {
         throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
     }
 
-    if (providedFields.some((field) => !RULE_UPDATABLE_FIELDS.includes(field))) {
+    if (dtoIn.name !== undefined && (!hasRequiredString(dtoIn.name) || dtoIn.name.trim().length > 20)) {
         throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
     }
 
-    if (dtoIn.name !== undefined && !hasRequiredString(dtoIn.name)) {
+    if (dtoIn.sensorType !== undefined && (!hasRequiredString(dtoIn.sensorType) || !SUPPORTED_SENSOR_TYPES.includes(dtoIn.sensorType.trim().toLowerCase()))) {
         throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
     }
 
-    if (dtoIn.metric !== undefined && !hasRequiredString(dtoIn.metric)) {
+    if (dtoIn.minThreshold !== undefined && (typeof dtoIn.minThreshold !== 'number' || Number.isNaN(dtoIn.minThreshold))) {
         throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
     }
 
-    if (dtoIn.operator !== undefined && !hasRequiredString(dtoIn.operator)) {
+    if (dtoIn.maxThreshold !== undefined && (typeof dtoIn.maxThreshold !== 'number' || Number.isNaN(dtoIn.maxThreshold))) {
         throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
     }
 
-    if (dtoIn.threshold !== undefined && (typeof dtoIn.threshold !== 'number' || Number.isNaN(dtoIn.threshold))) {
-        throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
-    }
-
-    if (
-        dtoIn.durationMinutes !== undefined &&
-        (!Number.isInteger(dtoIn.durationMinutes) || dtoIn.durationMinutes < 0)
-    ) {
+    if (dtoIn.durationThreshold !== undefined && (!Number.isInteger(dtoIn.durationThreshold) || dtoIn.durationThreshold < 0)) {
         throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
     }
 
@@ -120,40 +143,18 @@ const validateUpdateDtoIn = (id, dtoIn) => {
     }
 };
 
-const validateRuleDefinition = (ruleData) => {
-    if (!SUPPORTED_METRICS.includes(ruleData.metric) || !SUPPORTED_OPERATORS.includes(ruleData.operator)) {
-        throw createServiceError(400, 'invalidRuleDefinition', 'Rule definition is not valid.');
-    }
-};
-
-const normalizeCreatePayload = (fridgeId, dtoIn) => ({
-    fridgeId: fridgeId.trim(),
-    name: dtoIn.name.trim(),
-    metric: dtoIn.metric.trim().toLowerCase(),
-    operator: dtoIn.operator.trim(),
-    threshold: dtoIn.threshold,
-    durationMinutes: dtoIn.durationMinutes ?? 0,
-    isActive: dtoIn.isActive ?? true
-});
-
-const fridgeExists = async (fridgeId) => {
-    const filters = [{ fridgeId }];
-
-    if (mongoose.Types.ObjectId.isValid(fridgeId)) {
-        filters.push({ _id: fridgeId });
-    }
-
-    return fridgeModel.exists({ $or: filters });
-};
-
+//check if fridge exists
 const getFridgeExistsOrThrow = async (fridgeId, loadErrorCode, loadErrorMessage) => {
     try {
-        return await fridgeExists(fridgeId);
+        const exists = await fridgeModel.exists({ _id: fridgeId });
+
+        return exists;
     } catch (error) {
         throw createServiceError(500, loadErrorCode, loadErrorMessage);
     }
 };
 
+//get rule by ID or throw
 const getRuleByIdOrThrow = async (id, loadErrorCode, loadErrorMessage) => {
     try {
         const foundRule = await ruleModel.findById(id);
@@ -172,6 +173,7 @@ const getRuleByIdOrThrow = async (id, loadErrorCode, loadErrorMessage) => {
     }
 };
 
+//list rules
 const listRules = async (fridgeId) => {
     validateFridgeId(fridgeId);
 
@@ -193,40 +195,30 @@ const listRules = async (fridgeId) => {
     }
 };
 
+//create rule
 const createRule = async (fridgeId, dtoIn) => {
     validateCreateDtoIn(fridgeId, dtoIn);
 
-    const normalizedRule = normalizeCreatePayload(fridgeId, dtoIn);
-    validateRuleDefinition(normalizedRule);
+    const normalizedFridgeId = fridgeId.trim();
+    const normalizedName = dtoIn.name.trim();
+    const normalizedSensorType = dtoIn.sensorType.trim().toLowerCase();
 
-    const existingFridge = await getFridgeExistsOrThrow(normalizedRule.fridgeId, 'ruleCreateFailed', 'Failed to create fridge rule.');
+    const existingFridge = await getFridgeExistsOrThrow(normalizedFridgeId, 'ruleCreateFailed', 'Failed to create fridge rule.');
 
     if (!existingFridge) {
         throw createServiceError(404, 'fridgeDoesNotExist', 'Fridge does not exist.');
     }
 
-    let duplicateRule;
-
     try {
-        duplicateRule = await ruleModel.exists({
-            fridgeId: normalizedRule.fridgeId,
-            name: normalizedRule.name,
-            metric: normalizedRule.metric,
-            operator: normalizedRule.operator,
-            threshold: normalizedRule.threshold,
-            durationMinutes: normalizedRule.durationMinutes,
-            isActive: normalizedRule.isActive
+        const createdRule = await ruleModel.create({
+            fridgeId: normalizedFridgeId,
+            name: normalizedName,
+            sensorType: normalizedSensorType,
+            minThreshold: dtoIn.minThreshold,
+            maxThreshold: dtoIn.maxThreshold,
+            durationThreshold: dtoIn.durationThreshold ?? 0,
+            isActive: dtoIn.isActive ?? true
         });
-    } catch (error) {
-        throw createServiceError(500, 'ruleCreateFailed', 'Failed to create fridge rule.');
-    }
-
-    if (duplicateRule) {
-        throw createServiceError(409, 'ruleAlreadyExists', 'A rule with the same configuration already exists.');
-    }
-
-    try {
-        const createdRule = await ruleModel.create(normalizedRule);
 
         return normalizeRule(createdRule);
     } catch (error) {
@@ -234,6 +226,7 @@ const createRule = async (fridgeId, dtoIn) => {
     }
 };
 
+//get rule
 const getRule = async (id) => {
     validateRuleId(id);
 
@@ -242,46 +235,35 @@ const getRule = async (id) => {
     return normalizeRule(foundRule);
 };
 
+//update rule
 const updateRule = async (id, dtoIn) => {
     validateUpdateDtoIn(id, dtoIn);
 
     const existingRule = await getRuleByIdOrThrow(id, 'ruleLoadFailed', 'Failed to load rule detail.');
-    const updatedRuleData = {
-        name: dtoIn.name !== undefined ? dtoIn.name.trim() : existingRule.name,
-        metric: dtoIn.metric !== undefined ? dtoIn.metric.trim().toLowerCase() : existingRule.metric,
-        operator: dtoIn.operator !== undefined ? dtoIn.operator.trim() : existingRule.operator,
-        threshold: dtoIn.threshold !== undefined ? dtoIn.threshold : existingRule.threshold,
-        durationMinutes: dtoIn.durationMinutes !== undefined ? dtoIn.durationMinutes : existingRule.durationMinutes,
-        isActive: dtoIn.isActive !== undefined ? dtoIn.isActive : existingRule.isActive
-    };
 
-    validateRuleDefinition(updatedRuleData);
+    const sensorType = dtoIn.sensorType !== undefined ? dtoIn.sensorType.trim().toLowerCase() : existingRule.sensorType;
+    const minThreshold = dtoIn.minThreshold !== undefined ? dtoIn.minThreshold : existingRule.minThreshold;
+    const maxThreshold = dtoIn.maxThreshold !== undefined ? dtoIn.maxThreshold : existingRule.maxThreshold;
+
+    validateThresholdLimits(sensorType, minThreshold, maxThreshold);
 
     try {
-        const ruleToUpdate = await ruleModel.findById(id);
+        if (dtoIn.name !== undefined) existingRule.name = dtoIn.name.trim();
+        if (dtoIn.sensorType !== undefined) existingRule.sensorType = dtoIn.sensorType.trim().toLowerCase();
+        if (dtoIn.minThreshold !== undefined) existingRule.minThreshold = dtoIn.minThreshold;
+        if (dtoIn.maxThreshold !== undefined) existingRule.maxThreshold = dtoIn.maxThreshold;
+        if (dtoIn.durationThreshold !== undefined) existingRule.durationThreshold = dtoIn.durationThreshold;
+        if (dtoIn.isActive !== undefined) existingRule.isActive = dtoIn.isActive;
 
-        if (!ruleToUpdate) {
-            throw createServiceError(404, 'ruleDoesNotExist', 'Rule does not exist.');
-        }
-
-        RULE_UPDATABLE_FIELDS.forEach((field) => {
-            if (dtoIn[field] !== undefined) {
-                ruleToUpdate[field] = updatedRuleData[field];
-            }
-        });
-
-        const savedRule = await ruleToUpdate.save();
+        const savedRule = await existingRule.save();
 
         return normalizeRule(savedRule);
     } catch (error) {
-        if (error.code === 'ruleDoesNotExist') {
-            throw error;
-        }
-
         throw createServiceError(500, 'ruleUpdateFailed', 'Failed to update rule.');
     }
 };
 
+//delete rule
 const deleteRule = async (id) => {
     validateRuleId(id);
 
