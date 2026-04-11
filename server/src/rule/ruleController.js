@@ -6,7 +6,7 @@ const sendError = (res, error) => res.status(error.status || 500).send({
     message: error.message || 'Unexpected server error.'
 });
 
-const listRules = async (req, res) => {
+const listRulesController = async (req, res) => {
     try {
         const dtoOut = await ruleService.listRules(req.params.fridgeId);
 
@@ -16,7 +16,7 @@ const listRules = async (req, res) => {
     }
 };
 
-const createRule = async (req, res) => {
+const createRuleController = async (req, res) => {
     try {
         const dtoOut = await ruleService.createRule(req.params.fridgeId, req.body);
 
@@ -26,7 +26,7 @@ const createRule = async (req, res) => {
     }
 };
 
-const getRule = async (req, res) => {
+const getRuleController = async (req, res) => {
     try {
         const dtoOut = await ruleService.getRule(req.params.id);
 
@@ -36,7 +36,7 @@ const getRule = async (req, res) => {
     }
 };
 
-const updateRule = async (req, res) => {
+const updateRuleController = async (req, res) => {
     try {
         const dtoOut = await ruleService.updateRule(req.params.id, req.body);
 
@@ -46,7 +46,7 @@ const updateRule = async (req, res) => {
     }
 };
 
-const deleteRule = async (req, res) => {
+const deleteRuleController = async (req, res) => {
     try {
         const dtoOut = await ruleService.deleteRule(req.params.id);
 
@@ -57,9 +57,9 @@ const deleteRule = async (req, res) => {
 };
 
 module.exports = {
-    listRules,
-    createRule,
-    getRule,
-    updateRule,
-    deleteRule
+    listRulesController,
+    createRuleController,
+    getRuleController,
+    updateRuleController,
+    deleteRuleController
 };

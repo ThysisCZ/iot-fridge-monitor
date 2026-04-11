@@ -5,8 +5,8 @@ require('dotenv').config();
 const userModel = require('./userModel');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const emailService = require('../utils/emailService');
-const revokedTokenModel = require('./revokedTokenModel');
+const emailService = require('../email/emailService');
+const revokedTokenModel = require('../revokedToken/revokedTokenModel');
 
 //JWT secret key
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -148,7 +148,7 @@ module.exports.getUserService = (id) => {
         }
 
         //find user by ID
-        userModel.findOne({ _id: id })
+        userModel.findById(id)
             .then((user) => {
                 if (!user) {
                     reject({ message: "User profile could not be found." });

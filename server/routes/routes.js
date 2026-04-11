@@ -13,18 +13,19 @@ const { authenticateToken } = require('../src/middleware/authMiddleware');
 const router = express.Router();
 
 //routes for HTTP requests
-router.route('/api/auth/register').post(userController.registerUserController);
-router.route('/api/auth/login').post(userController.loginUserController);
-router.route('/api/auth/logout').post(authenticateToken, userController.logoutUserController);
-router.route('/api/user/profile').get(authenticateToken, userController.getUserController);
-router.get('/api/fridge/:fridgeId/rules/list', authenticateToken, ruleController.listRules);
-router.post('/api/fridge/:fridgeId/rules/create', authenticateToken, ruleController.createRule);
-router.get('/api/rule/:id', authenticateToken, ruleController.getRule);
-router.patch('/api/rule/update/:id', authenticateToken, ruleController.updateRule);
-router.delete('/api/rule/delete/:id', authenticateToken, ruleController.deleteRule);
-router.get('/api/notification/list', authenticateToken, notificationController.listNotifications);
+router.post('/api/auth/register', userController.registerUserController);
+router.post('/api/auth/login', userController.loginUserController);
+router.post('/api/auth/logout', authenticateToken, userController.logoutUserController);
+router.get('/api/user/profile', authenticateToken, userController.getUserController);
+router.get('/api/fridge/:fridgeId/rules/list', authenticateToken, ruleController.listRulesController);
+router.post('/api/fridge/:fridgeId/rules/create', authenticateToken, ruleController.createRuleController);
+router.get('/api/rule/:id', authenticateToken, ruleController.getRuleController);
+router.patch('/api/rule/update/:id', authenticateToken, ruleController.updateRuleController);
+router.delete('/api/rule/delete/:id', authenticateToken, ruleController.deleteRuleController);
+router.get('/api/notification/list', authenticateToken, notificationController.listNotificationsController);
 router.post('/api/measurement/ingest', measurementController.measurementIngestController);
 router.get('/api/measurement/:id', measurementController.getMeasurementController);
+router.get('/api/fridge/:fridgeId/measurement/list', measurementController.listMeasurementsController);
 
 //export router
 module.exports = router;

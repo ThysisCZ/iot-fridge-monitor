@@ -1,6 +1,6 @@
 const notificationService = require('./notificationService');
 
-const listNotifications = async (req, res) => {
+const listNotificationsController = async (req, res) => {
     try {
         const dtoOut = await notificationService.listNotifications(req.user);
 
@@ -14,5 +14,5 @@ const listNotifications = async (req, res) => {
 };
 
 module.exports = {
-    listNotifications
+    listNotificationsController
 };
