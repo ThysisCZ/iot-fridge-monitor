@@ -5,9 +5,9 @@ const mongoose = require('mongoose');
 const ruleSchema = new mongoose.Schema(
     {
         fridgeId: {
-            type: String,
-            required: true,
-            trim: true
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Fridge',
+            required: true
         },
         name: {
             type: String,

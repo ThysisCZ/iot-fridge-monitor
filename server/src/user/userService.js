@@ -5,7 +5,7 @@ require('dotenv').config();
 const userModel = require('./userModel');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const emailService = require('./emailService');
+const emailService = require('../utils/emailService');
 const revokedTokenModel = require('./revokedTokenModel');
 
 //JWT secret key
@@ -42,13 +42,13 @@ module.exports.registerUserService = (userDetails) => {
 
                 //login after registration
                 const token = jwt.sign(
-                    { id: user._id, email: user.email },
+                    { id: user.id, email: user.email },
                     JWT_SECRET,
                     { expiresIn: '24h' }
                 );
 
                 resolve({
-                    id: user._id,
+                    id: user.id,
                     name: user.name,
                     email: user.email,
                     token: token
@@ -88,13 +88,13 @@ module.exports.loginUserService = (email, password) => {
 
                 //create the JWT token
                 const token = jwt.sign(
-                    { id: foundUser._id, email: foundUser.email },
+                    { id: foundUser.id, email: foundUser.email },
                     JWT_SECRET,
                     { expiresIn: '24h' }
                 );
 
                 resolve({
-                    id: user._id,
+                    id: user.id,
                     name: user.name,
                     email: user.email,
                     token: token
@@ -156,7 +156,7 @@ module.exports.getUserService = (id) => {
                 }
 
                 resolve({
-                    id: user._id,
+                    id: user.id,
                     name: user.name,
                     email: user.email
                 });

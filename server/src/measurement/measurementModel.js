@@ -3,34 +3,45 @@ const mongoose = require("mongoose");
 
 //define measurement schema
 const measurementSchema = new mongoose.Schema(
-  {
-    monitorId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "MonitorScheme",
-      required: true,
+    {
+        monitorId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Monitor",
+            required: true,
+        },
+        fridgeId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Fridge",
+            required: true,
+        },
+        temperature: {
+            type: Number,
+            required: true,
+        },
+        humidity: {
+            type: Number,
+            required: true,
+        },
+        illuminance: {
+            type: Number,
+            required: true,
+        },
     },
-    fridgeId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Fridge",
-      required: true,
+    {
+        timestamps: true,
     },
-    temperature: {
-      type: Number,
-      required: true,
-    },
-    humidity: {
-      type: Number,
-      required: true,
-    },
-    illuminance: {
-      type: Number,
-      required: true,
-    },
-  },
-  {
-    timestamps: true,
-  },
 );
 
 //export model
-module.exports = mongoose.model("Measurement", measurementSchema);
+measurementSchema.set('toJSON', {
+    transform: (document, returnedObject) => {
+        returnedObject.id = returnedObject._id.toString();
+        delete returnedObject._id;
+        delete returnedObject.__v;
+
+        return returnedObject;
+    }
+});
+
+//export model
+module.exports = mongoose.models.Measurement || mongoose.model("Measurement", measurementSchema);
