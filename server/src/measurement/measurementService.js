@@ -10,8 +10,15 @@ const emailService = require('../email/emailService');
 const VALID_GRANULARITIES = [5, 15, 30, 60, 360, 720, 1440];
 
 // POST /measurement/ingest
-module.exports.ingestMeasurement = (dtoIn) => {
+module.exports.ingestMeasurement = (dtoIn, authenticatedUser) => {
     return new Promise((resolve, reject) => {
+
+        if (!authenticatedUser || !authenticatedUser.id) {
+            return reject({
+                message: 'Access token required.',
+                code: 'unauthorized'
+            });
+        }
 
         // logical bounds check
         const { temperature, humidity, illuminance, monitorId } = dtoIn;
@@ -65,7 +72,7 @@ module.exports.ingestMeasurement = (dtoIn) => {
 
                 return newMeasurement.save();
             })
-            .then((savedMeasurement) => {
+            .then(async (savedMeasurement) => {
 
                 // fetch only active rules for this fridge
                 return ruleModel.find({ fridgeId: foundMonitor.fridgeId, isActive: true }).then(async (rules) => {
@@ -157,8 +164,16 @@ module.exports.ingestMeasurement = (dtoIn) => {
 };
 
 // GET /measurement/:id
-module.exports.getMeasurementById = (id) => {
+module.exports.getMeasurementById = (id, authenticatedUser) => {
     return new Promise((resolve, reject) => {
+
+        if (!authenticatedUser || !authenticatedUser.id) {
+            return reject({
+                message: 'Access token required.',
+                code: 'unauthorized'
+            });
+        }
+
         measurementModel
             .findById(id)
             .then((measurement) => {
@@ -170,8 +185,15 @@ module.exports.getMeasurementById = (id) => {
 };
 
 // GET /fridge/:fridgeId/measurement/list
-module.exports.listMeasurements = (fridgeId, filters) => {
+module.exports.listMeasurements = (fridgeId, filters, authenticatedUser) => {
     return new Promise((resolve, reject) => {
+
+        if (!authenticatedUser || !authenticatedUser.id) {
+            return reject({
+                message: 'Access token required.',
+                code: 'unauthorized'
+            });
+        }
 
         if (!mongoose.Types.ObjectId.isValid(fridgeId)) {
             return reject({ message: 'Invalid fridge ID.', code: 'invalidDtoIn' });

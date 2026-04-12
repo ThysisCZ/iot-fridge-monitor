@@ -23,9 +23,10 @@ router.get('/api/rule/:id', authenticateToken, ruleController.getRuleController)
 router.patch('/api/rule/update/:id', authenticateToken, ruleController.updateRuleController);
 router.delete('/api/rule/delete/:id', authenticateToken, ruleController.deleteRuleController);
 router.get('/api/notification/list', authenticateToken, notificationController.listNotificationsController);
-router.post('/api/measurement/ingest', measurementController.measurementIngestController);
-router.get('/api/measurement/:id', measurementController.getMeasurementController);
-router.get('/api/fridge/:fridgeId/measurement/list', measurementController.listMeasurementsController);
+router.post('/api/measurement/ingest', authenticateToken, measurementController.measurementIngestController);
+router.get('/api/measurement/:id', authenticateToken, measurementController.getMeasurementController);
+router.get('/api/fridge/:fridgeId/measurement/list', authenticateToken, measurementController.listMeasurementsController);
+router.post('/api/measurement/ingest', authenticateToken, measurementController.measurementIngestController);
 
 //export router
 module.exports = router;

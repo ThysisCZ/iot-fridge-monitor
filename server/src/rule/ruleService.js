@@ -174,7 +174,11 @@ const getRuleByIdOrThrow = async (id, loadErrorCode, loadErrorMessage) => {
 };
 
 //list rules
-const listRules = async (fridgeId) => {
+const listRules = async (fridgeId, authenticatedUser) => {
+    if (!authenticatedUser || !authenticatedUser.id) {
+        throw createServiceError(401, 'unauthorized', 'Access token required.');
+    }
+
     validateFridgeId(fridgeId);
 
     const normalizedFridgeId = fridgeId.trim();
@@ -196,7 +200,11 @@ const listRules = async (fridgeId) => {
 };
 
 //create rule
-const createRule = async (fridgeId, dtoIn) => {
+const createRule = async (fridgeId, dtoIn, authenticatedUser) => {
+    if (!authenticatedUser || !authenticatedUser.id) {
+        throw createServiceError(401, 'unauthorized', 'Access token required.');
+    }
+
     validateCreateDtoIn(fridgeId, dtoIn);
 
     const normalizedFridgeId = fridgeId.trim();
@@ -227,7 +235,11 @@ const createRule = async (fridgeId, dtoIn) => {
 };
 
 //get rule
-const getRule = async (id) => {
+const getRule = async (id, authenticatedUser) => {
+    if (!authenticatedUser || !authenticatedUser.id) {
+        throw createServiceError(401, 'unauthorized', 'Access token required.');
+    }
+
     validateRuleId(id);
 
     const foundRule = await getRuleByIdOrThrow(id, 'ruleLoadFailed', 'Failed to load rule detail.');
@@ -236,7 +248,11 @@ const getRule = async (id) => {
 };
 
 //update rule
-const updateRule = async (id, dtoIn) => {
+const updateRule = async (id, dtoIn, authenticatedUser) => {
+    if (!authenticatedUser || !authenticatedUser.id) {
+        throw createServiceError(401, 'unauthorized', 'Access token required.');
+    }
+
     validateUpdateDtoIn(id, dtoIn);
 
     const existingRule = await getRuleByIdOrThrow(id, 'ruleLoadFailed', 'Failed to load rule detail.');
@@ -264,7 +280,11 @@ const updateRule = async (id, dtoIn) => {
 };
 
 //delete rule
-const deleteRule = async (id) => {
+const deleteRule = async (id, authenticatedUser) => {
+    if (!authenticatedUser || !authenticatedUser.id) {
+        throw createServiceError(401, 'unauthorized', 'Access token required.');
+    }
+
     validateRuleId(id);
 
     const existingRule = await getRuleByIdOrThrow(id, 'ruleLoadFailed', 'Failed to load rule detail.');

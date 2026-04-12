@@ -3,7 +3,7 @@ const measurementService = require('./measurementService');
 // POST /measurement/ingest
 const measurementIngestController = async (req, res) => {
     measurementService
-        .ingestMeasurement(req.body)
+        .ingestMeasurement(req.body, req.user)
         .then((result) => {
             res.status(201).json(result);
         })
@@ -26,7 +26,7 @@ const measurementIngestController = async (req, res) => {
 // GET /measurement/:id
 const getMeasurementController = async (req, res) => {
     measurementService
-        .getMeasurementById(req.params.id)
+        .getMeasurementById(req.params.id, req.user)
         .then((measurement) => {
             res.status(200).json(measurement);
         })
@@ -44,7 +44,7 @@ const listMeasurementsController = async (req, res) => {
     };
 
     measurementService
-        .listMeasurements(req.params.fridgeId, filters)
+        .listMeasurements(req.params.fridgeId, filters, req.user)
         .then((result) => {
             res.status(200).json(result);
         })
