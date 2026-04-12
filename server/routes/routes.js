@@ -27,6 +27,11 @@ router.post('/api/measurement/ingest', authenticateToken, measurementController.
 router.get('/api/measurement/:id', authenticateToken, measurementController.getMeasurementController);
 router.get('/api/fridge/:fridgeId/measurement/list', authenticateToken, measurementController.listMeasurementsController);
 router.post('/api/measurement/ingest', authenticateToken, measurementController.measurementIngestController);
+router.post('/api/gateway/register', authenticateToken, gatewayController.registerGatewayController);
+router.get('/api/gateway/list', authenticateToken, gatewayController.listGatewaysController);
+router.get('/api/gateway/:id', authenticateToken, gatewayController.getGatewayController);
+router.patch('/api/gateway/update/:id', authenticateToken, gatewayController.updateGatewayController);
+router.delete('/api/gateway/delete/:id', authenticateToken, gatewayController.deleteGatewayController);
 
 //export router
 module.exports = router;
