@@ -7,7 +7,8 @@ const monitorSchema = new mongoose.Schema(
         fridgeId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Fridge",
-            required: true,
+            required: false,
+            default: null
         },
         gatewayId: {
             type: mongoose.Schema.Types.ObjectId,

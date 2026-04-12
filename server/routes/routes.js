@@ -26,12 +26,18 @@ router.get('/api/notification/list', authenticateToken, notificationController.l
 router.post('/api/measurement/ingest', authenticateToken, measurementController.measurementIngestController);
 router.get('/api/measurement/:id', authenticateToken, measurementController.getMeasurementController);
 router.get('/api/fridge/:fridgeId/measurement/list', authenticateToken, measurementController.listMeasurementsController);
-router.post('/api/measurement/ingest', authenticateToken, measurementController.measurementIngestController);
 router.post('/api/gateway/register', authenticateToken, gatewayController.registerGatewayController);
 router.get('/api/gateway/list', authenticateToken, gatewayController.listGatewaysController);
 router.get('/api/gateway/:id', authenticateToken, gatewayController.getGatewayController);
 router.patch('/api/gateway/update/:id', authenticateToken, gatewayController.updateGatewayController);
 router.delete('/api/gateway/delete/:id', authenticateToken, gatewayController.deleteGatewayController);
+router.post('/api/gateway/:gatewayId/monitor/create', authenticateToken, monitorController.createMonitorController);
+router.get('/api/gateway/:gatewayId/monitor/list', authenticateToken, monitorController.listMonitorsController);
+router.get('/api/monitor/:id', authenticateToken, monitorController.getMonitorController);
+router.patch('/api/monitor/:monitorId/addFridge/:fridgeId', authenticateToken, monitorController.addFridgeController);
+router.patch('/api/monitor/:monitorId/removeFridge', authenticateToken, monitorController.removeFridgeController);
+router.delete('/api/monitor/delete/:id', authenticateToken, monitorController.deleteMonitorController);
+router.post('/api/fridge/create', authenticateToken, fridgeController.createFridgeController);
 
 //export router
 module.exports = router;
