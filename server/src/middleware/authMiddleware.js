@@ -31,3 +31,34 @@ module.exports.authenticateToken = async (req, res, next) => {
         return res.status(500).send({ message: "Invalid or expired token." });
     }
 };
+
+module.exports.authenticateApiKey = async (req, res, next) => {
+    try {
+        const apiKey = req.headers['x-api-key'];
+
+        if (!apiKey) {
+            return res.status(401).send({ message: "API Key required." });
+        }
+
+        //find the gateway based on API key
+        const gateway = await gatewayModel.findOne({ apiKey: apiKey, status: 'active' });
+
+        if (!gateway) {
+            return res.status(401).send({ message: "Invalid API Key." });
+        }
+
+        gateway.lastSeen = new Date();
+        gateway.save();
+
+        //attach the gateway owner ID to req.user
+        req.user = {
+            id: gateway.ownerId.toString(),
+            gatewayId: gateway._id.toString(),
+            role: 'gateway'
+        };
+
+        next();
+    } catch (error) {
+        return res.status(500).send({ message: "Internal server error." });
+    }
+};

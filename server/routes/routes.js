@@ -7,7 +7,7 @@ const fridgeController = require('../src/fridge/fridgeController');
 const measurementController = require('../src/measurement/measurementController');
 const ruleController = require('../src/rule/ruleController');
 const notificationController = require('../src/notification/notificationController');
-const { authenticateToken } = require('../src/middleware/authMiddleware');
+const { authenticateToken, authenticateApiKey } = require('../src/middleware/authMiddleware');
 
 //initialize router
 const router = express.Router();
@@ -23,7 +23,7 @@ router.get('/api/rule/:id', authenticateToken, ruleController.getRuleController)
 router.patch('/api/rule/update/:id', authenticateToken, ruleController.updateRuleController);
 router.delete('/api/rule/delete/:id', authenticateToken, ruleController.deleteRuleController);
 router.get('/api/notification/list', authenticateToken, notificationController.listNotificationsController);
-router.post('/api/measurement/ingest', authenticateToken, measurementController.measurementIngestController);
+router.post('/api/measurement/ingest', authenticateApiKey, measurementController.measurementIngestController);
 router.get('/api/measurement/:id', authenticateToken, measurementController.getMeasurementController);
 router.get('/api/fridge/:fridgeId/measurement/list', authenticateToken, measurementController.listMeasurementsController);
 router.post('/api/gateway/register', authenticateToken, gatewayController.registerGatewayController);
