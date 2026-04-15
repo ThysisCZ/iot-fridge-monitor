@@ -43,5 +43,8 @@ router.get('/api/fridge/:id', authenticateToken, fridgeController.getFridgeContr
 router.patch('/api/fridge/:id', authenticateToken, fridgeController.updateFridgeController);
 router.delete('/api/fridge/:id', authenticateToken, fridgeController.deleteFridgeController);
 
+router.get('/api/fridge/:fridgeId/members/list', authenticateToken, fridgeController.getFridgeMembersController);
+router.post('/api/fridge/:fridgeId/members/invite', authenticateToken, fridgeController.inviteFridgeMemberController);
+
 //export router
 module.exports = router;
