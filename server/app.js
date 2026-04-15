@@ -7,6 +7,8 @@ const cors = require('cors');
 const app = express();
 const mongoose = require('mongoose');
 const routes = require('./routes/routes');
+const cron = require('node-cron');
+const monitorModel = require('./src/monitor/monitorModel');
 
 const PORT = 8000;
 const USERNAME = process.env.DB_USER;
@@ -37,3 +39,13 @@ mongoose.connect(URI)
         console.error("Failed to connect to DB: ", error)
         process.exit(1);
     });
+
+//run every 10 minutes
+cron.schedule('*/10 * * * *', async () => {
+    const timeout = new Date(Date.now() - (60 * 60 * 1000)); //1 hour threshold
+
+    await monitorModel.updateMany(
+        { lastSeen: { $lt: timeout }, status: { $ne: 'offline' } },
+        { status: 'offline' }
+    );
+});

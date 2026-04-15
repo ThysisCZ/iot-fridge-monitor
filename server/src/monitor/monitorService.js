@@ -92,22 +92,30 @@ const getMonitor = async (monitorId, authenticatedUser) => {
 };
 
 const updateMonitor = async (monitorId, dtoIn, authenticatedUser) => {
-    if (!authenticatedUser || !authenticatedUser.id) {
-        throw createServiceError(401, 'unauthorized', 'Access token required.');
+    if (!authenticatedUser || !authenticatedUser.gatewayId) {
+        return reject({
+            message: 'API key is required.',
+            code: 'unauthorized'
+        });
+    }
+
+    const monitor = await monitorModel.findById(monitorId);
+    if (!monitor) throw createServiceError(404, 'monitorNotFound', 'Monitor not found.');
+
+    if (authenticatedUser.role === 'gateway' && monitor.gatewayId.toString() !== authenticatedUser.gatewayId) {
+        throw createServiceError(403, 'forbidden', 'This gateway is not authorized to update this monitor.');
     }
 
     if (!dtoIn.id) {
         throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
     }
 
-    const monitor = await monitorModel.findById(monitorId);
-    if (!monitor) throw createServiceError(404, 'monitorNotFound', 'Monitor not found.');
-
     if (dtoIn.firmwareVersion) monitor.firmwareVersion = dtoIn.firmwareVersion;
+    if (dtoIn.batteryLevel) monitor.batteryLevel = dtoIn.batteryLevel;
     if (dtoIn.status) monitor.status = dtoIn.status;
 
-    const saved = await monitor.save();
-    return saved.toJSON();
+    monitor.lastSeen = new Date();
+    await monitor.save();
 };
 
 const addFridge = async (monitorId, fridgeId, authenticatedUser) => {

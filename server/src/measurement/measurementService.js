@@ -13,9 +13,9 @@ const VALID_GRANULARITIES = [5, 15, 30, 60, 360, 720, 1440];
 module.exports.ingestMeasurement = (dtoIn, authenticatedUser) => {
     return new Promise((resolve, reject) => {
 
-        if (!authenticatedUser || !authenticatedUser.id) {
+        if (!authenticatedUser || !authenticatedUser.gatewayId) {
             return reject({
-                message: 'Access token required.',
+                message: 'API key is required.',
                 code: 'unauthorized'
             });
         }
@@ -50,7 +50,7 @@ module.exports.ingestMeasurement = (dtoIn, authenticatedUser) => {
 
                 return fridgeModel.findById(monitor.fridgeId);
             })
-            .then((fridge) => {
+            .then(async (fridge) => {
                 if (!fridge) {
                     throw {
                         message: 'Fridge not found.',
@@ -60,6 +60,13 @@ module.exports.ingestMeasurement = (dtoIn, authenticatedUser) => {
                 }
 
                 foundFridge = fridge;
+
+                // update monitor battery level
+                await monitorModel.findByIdAndUpdate(dtoIn.monitorId, {
+                    batteryLevel: dtoIn.batteryLevel,
+                    lastSeen: new Date(),
+                    status: 'active'
+                });
 
                 // save measurement data
                 const newMeasurement = new measurementModel({
