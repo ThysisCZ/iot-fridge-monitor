@@ -37,7 +37,7 @@ const createFridge = async (dtoIn, authenticatedUser) => {
     }
 };
 
-const getFridge = async (id, dtoIn, authenticatedUser) => {
+const getFridge = async (id, authenticatedUser) => {
     if (!authenticatedUser || !authenticatedUser.id) {
         throw createServiceError(401, 'unauthorized', 'Access token required.');
     }
@@ -74,6 +74,7 @@ const updateFridge = async (id, dtoIn, authenticatedUser) => {
         throw createServiceError(403, 'forbidden', 'You are not authorized to access this fridge.');
     }
 
+    // Try updating fridge
     try {
         foundFridge = { ...foundFridge, ...dtoIn };
         const savedFridge = await foundFridge.save();
@@ -84,8 +85,34 @@ const updateFridge = async (id, dtoIn, authenticatedUser) => {
     }
 };
 
+const deleteFridge = async (id, authenticatedUser) => {
+    if (!authenticatedUser || !authenticatedUser.id) {
+        throw createServiceError(401, 'unauthorized', 'Access token required.');
+    }
+
+    const foundFridge = await fridgeModel.findOne({ fridgeId: id });
+    
+    //Error if fridge does not exist
+    if (!foundFridge) {
+        throw createServiceError(400, 'fridgeNotFound', `Fridge with fridgeId '${id}' does not exist.`); 
+    }
+
+    //Check if auth user is a member or owner
+    if ( foundFridge.ownerId != authenticatedUser.id && foundFridge.memberIds.findIndex(authenticatedUser.id) == -1 ) {
+        throw createServiceError(403, 'forbidden', 'You are not authorized to access this fridge.');
+    }
+
+    try {
+        const result = await fridgeModel.deleteOne({ fridgeId: id });
+        return result.toJSON();
+    } catch (error) {
+        throw createServiceError(500, 'storageFailed', 'Failed to delete fridge record in the database.');
+    }
+}
+
 module.exports = {
     createFridge,
     getFridge,
-    updateFridge
+    updateFridge,
+    deleteFridge
 }

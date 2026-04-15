@@ -37,8 +37,11 @@ router.get('/api/monitor/:id', authenticateToken, monitorController.getMonitorCo
 router.patch('/api/monitor/:monitorId/addFridge/:fridgeId', authenticateToken, monitorController.addFridgeController);
 router.patch('/api/monitor/:monitorId/removeFridge', authenticateToken, monitorController.removeFridgeController);
 router.delete('/api/monitor/delete/:id', authenticateToken, monitorController.deleteMonitorController);
+
 router.post('/api/fridge/create', authenticateToken, fridgeController.createFridgeController);
 router.get('/api/fridge/:id', authenticateToken, fridgeController.getFridgeController);
+router.patch('/api/fridge/:id', authenticateToken, fridgeController.updateFridgeController);
+router.delete('/api/fridge/:id', authenticateToken, fridgeController.deleteFridgeController);
 
 //export router
 module.exports = router;
