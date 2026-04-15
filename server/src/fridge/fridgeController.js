@@ -1,6 +1,16 @@
 //dependencies
 const fridgeService = require('./fridgeService');
 
+const listFridgesController = async (req, res) => {
+    try {
+        const dtoOut = await fridgeService.listFridges(req.user);
+        return res.status(201).send(dtoOut);
+    } catch (error) {
+        return res.status(error.status || 500).send({ code: error.code, message: error.message });
+    }
+};
+
+
 const createFridgeController = async (req, res) => {
     try {
         const dtoOut = await fridgeService.createFridge(req.body, req.user);
@@ -67,6 +77,7 @@ const removeFridgeMemberController = async (req, res) => {
 };
 
 module.exports = {
+    listFridgesController,
     createFridgeController,
     getFridgeController,
     updateFridgeController,

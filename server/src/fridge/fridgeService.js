@@ -26,6 +26,19 @@ const getFridgeData = async(id, authenticatedUser) => {
     return foundFridge;
 }
 
+const listFridges = async (authenticatedUser) => {
+    
+    if (!authenticatedUser || !authenticatedUser.id) {
+        throw createServiceError(401, 'unauthorized', 'Access token required.');
+    }
+
+    //Find all fridges with authenticated user id in the memberIds array
+    const fridges = await fridgeModel.find({ memberIds: authenticatedUser.id });
+    
+    return fridges.toJSON();
+
+}
+
 const createFridge = async (dtoIn, authenticatedUser) => {
     if (!authenticatedUser || !authenticatedUser.id) {
         throw createServiceError(401, 'unauthorized', 'Access token required.');
@@ -173,10 +186,13 @@ const removeFridgeMember = async (id, memberId, authenticatedUser) => {
 }
 
 module.exports = {
+    listFridges,
+
     createFridge,
     getFridge,
     updateFridge,
     deleteFridge,
+
     getFridgeMembers,
     inviteFridgeMember,
     removeFridgeMember
