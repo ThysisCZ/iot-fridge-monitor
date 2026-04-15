@@ -146,11 +146,38 @@ const inviteFridgeMember = async (id, dtoIn, authenticatedUser) => {
     }
 }
 
+const removeFridgeMember = async (id, memberId, authenticatedUser) => {
+    if (!authenticatedUser || !authenticatedUser.id) {
+        throw createServiceError(401, 'unauthorized', 'Access token required.');
+    }
+    
+    const foundFridge = await getFridgeData(id, authenticatedUser);
+    //Only owner can invite
+    if (foundFridge.ownerId != authenticatedUser.id && memberId != authenticatedUser.id) {
+        throw createServiceError(403, 'forbidden', 'You are not authorized to remove other members from this fridge.');
+    }
+
+    //Is the user a member of the fridge?
+    const removeAtIndex = foundFridge.memberIds.findIndex(memberId);
+    if ( removeAtIndex == -1) {
+        throw createServiceError(400, 'userIsNotAMember', `User is not a member of this fridge`);
+    }
+    try {
+        foundFridge.memberIds.splice( removeAtIndex, 1 );
+        const savedFridge = await foundFridge.save();
+    
+        return savedFridge.toJSON();
+    } catch (error) {
+        throw createServiceError(500, 'storageFailed', 'Failed to update fridge record in the database.');
+    }
+}
+
 module.exports = {
     createFridge,
     getFridge,
     updateFridge,
     deleteFridge,
     getFridgeMembers,
-    inviteFridgeMember
+    inviteFridgeMember,
+    removeFridgeMember
 }

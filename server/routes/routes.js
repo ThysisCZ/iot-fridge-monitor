@@ -45,6 +45,7 @@ router.delete('/api/fridge/:id', authenticateToken, fridgeController.deleteFridg
 
 router.get('/api/fridge/:fridgeId/members/list', authenticateToken, fridgeController.getFridgeMembersController);
 router.post('/api/fridge/:fridgeId/members/invite', authenticateToken, fridgeController.inviteFridgeMemberController);
+router.delete('/api/fridge/:fridgeId/members/delete/:memberId', authenticateToken, fridgeController.removeFridgeMemberController);
 
 //export router
 module.exports = router;
