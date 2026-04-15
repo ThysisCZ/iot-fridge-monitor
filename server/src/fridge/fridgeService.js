@@ -37,6 +37,55 @@ const createFridge = async (dtoIn, authenticatedUser) => {
     }
 };
 
+const getFridge = async (id, dtoIn, authenticatedUser) => {
+    if (!authenticatedUser || !authenticatedUser.id) {
+        throw createServiceError(401, 'unauthorized', 'Access token required.');
+    }
+    
+    const foundFridge = await fridgeModel.findOne({ fridgeId: id });
+
+    //Error if fridge does not exist
+    if (!foundFridge) {
+        throw createServiceError(400, 'fridgeNotFound', `Fridge with fridgeId '${id}' does not exist.`); 
+    }
+
+    //Check if auth user is a member or owner
+    if ( foundFridge.ownerId != authenticatedUser.id && foundFridge.memberIds.findIndex(authenticatedUser.id) == -1 ) {
+        throw createServiceError(403, 'forbidden', 'You are not authorized to access this fridge.');
+    }
+
+    return foundFridge.toJSON();
+};
+
+const updateFridge = async (id, dtoIn, authenticatedUser) => {
+    if (!authenticatedUser || !authenticatedUser.id) {
+        throw createServiceError(401, 'unauthorized', 'Access token required.');
+    }
+    
+    const foundFridge = await fridgeModel.findOne({ fridgeId: id });
+    
+    //Error if fridge does not exist
+    if (!foundFridge) {
+        throw createServiceError(400, 'fridgeNotFound', `Fridge with fridgeId '${id}' does not exist.`); 
+    }
+
+    //Check if auth user is a member or owner
+    if ( foundFridge.ownerId != authenticatedUser.id && foundFridge.memberIds.findIndex(authenticatedUser.id) == -1 ) {
+        throw createServiceError(403, 'forbidden', 'You are not authorized to access this fridge.');
+    }
+
+    try {
+        foundFridge = { ...foundFridge, ...dtoIn };
+        const savedFridge = await foundFridge.save();
+
+        return savedFridge.toJSON();
+    } catch (error) {
+        throw createServiceError(500, 'storageFailed', 'Failed to update fridge record in the database.');
+    }
+};
+
 module.exports = {
-    createFridge
+    createFridge,
+    getFridge,
+    updateFridge
 }
