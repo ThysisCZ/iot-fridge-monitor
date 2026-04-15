@@ -1,6 +1,16 @@
 //dependencies
 const fridgeService = require('./fridgeService');
 
+const listFridgesController = async (req, res) => {
+    try {
+        const dtoOut = await fridgeService.listFridges(req.user);
+        return res.status(201).send(dtoOut);
+    } catch (error) {
+        return res.status(error.status || 500).send({ code: error.code, message: error.message });
+    }
+};
+
+
 const createFridgeController = async (req, res) => {
     try {
         const dtoOut = await fridgeService.createFridge(req.body, req.user);
@@ -10,6 +20,69 @@ const createFridgeController = async (req, res) => {
     }
 };
 
+const getFridgeController = async (req, res) => {
+    try {
+        const dtoOut = await fridgeService.getFridge(req.params.id, req.user);
+        return res.status(201).send(dtoOut);
+    } catch (error) {
+        return res.status(error.status || 500).send({ code: error.code, message: error.message });
+    }
+};
+
+const updateFridgeController = async (req, res) => {
+    try {
+        const dtoOut = await fridgeService.updateFridge(req.params.id, req.body, req.user);
+        return res.status(201).send(dtoOut);
+    } catch (error) {
+        return res.status(error.status || 500).send({ code: error.code, message: error.message });
+    }
+};
+
+const deleteFridgeController = async (req, res) => {
+    try {
+        const dtoOut = await fridgeService.deleteFridge(req.params.id, req.user);
+        return res.status(201).send(dtoOut);
+    } catch (error) {
+        return res.status(error.status || 500).send({ code: error.code, message: error.message });
+    }
+};
+
+
+const getFridgeMembersController = async (req, res) => {
+    try {
+        const dtoOut = await fridgeService.getFridgeMembers(req.params.fridgeId, req.user);
+        return res.status(201).send(dtoOut);
+    } catch (error) {
+        return res.status(error.status || 500).send({ code: error.code, message: error.message });
+    }
+};
+
+
+const inviteFridgeMemberController = async (req, res) => {
+    try {
+        const dtoOut = await fridgeService.inviteFridgeMember(req.params.fridgeId, req.body, req.user);
+        return res.status(201).send(dtoOut);
+    } catch (error) {
+        return res.status(error.status || 500).send({ code: error.code, message: error.message });
+    }
+};
+
+const removeFridgeMemberController = async (req, res) => {
+    try {
+        const dtoOut = await fridgeService.removeFridgeMember(req.params.fridgeId, req.params.memberId, req.user);
+        return res.status(201).send(dtoOut);
+    } catch (error) {
+        return res.status(error.status || 500).send({ code: error.code, message: error.message });
+    }
+};
+
 module.exports = {
-    createFridgeController
+    listFridgesController,
+    createFridgeController,
+    getFridgeController,
+    updateFridgeController,
+    deleteFridgeController,
+    getFridgeMembersController,
+    inviteFridgeMemberController,
+    removeFridgeMemberController
 }
