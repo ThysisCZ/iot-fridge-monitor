@@ -44,8 +44,8 @@ router.get('/api/fridge/list', authenticateToken, fridgeController.listFridgesCo
 
 router.post('/api/fridge/create', authenticateToken, fridgeController.createFridgeController);
 router.get('/api/fridge/:id', authenticateToken, fridgeController.getFridgeController);
-router.patch('/api/fridge/:id', authenticateToken, fridgeController.updateFridgeController);
-router.delete('/api/fridge/:id', authenticateToken, fridgeController.deleteFridgeController);
+router.patch('/api/fridge/update/:id', authenticateToken, fridgeController.updateFridgeController);
+router.delete('/api/fridge/delete/:id', authenticateToken, fridgeController.deleteFridgeController);
 
 router.get('/api/fridge/:fridgeId/members/list', authenticateToken, fridgeController.getFridgeMembersController);
 router.post('/api/fridge/:fridgeId/members/invite', authenticateToken, fridgeController.inviteFridgeMemberController);
