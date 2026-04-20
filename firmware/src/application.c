@@ -25,10 +25,10 @@ void report_all_data()
     twr_tmp112_get_temperature_celsius(&temperature, &t);
     twr_sht20_get_humidity_percentage(&humidity, &h);
     twr_opt3001_get_illuminance_lux(&illuminance, &i);
-    twr_bat_get_voltage(&b);
+    twr_module_battery_get_voltage(&b);
 
     // Publish everything
-    twr_radio_pub_thermometer(TWR_RADIO_PUB_CHANNEL_R1_I2C0_ADDRESS_DEFAULT, &t);
+    twr_radio_pub_temperature(TWR_RADIO_PUB_CHANNEL_R1_I2C0_ADDRESS_DEFAULT, &t);
     twr_radio_pub_humidity(TWR_RADIO_PUB_CHANNEL_R1_I2C0_ADDRESS_DEFAULT, &h);
     twr_radio_pub_luminosity(TWR_RADIO_PUB_CHANNEL_R1_I2C0_ADDRESS_DEFAULT, &i);
     twr_radio_pub_battery(&b);
