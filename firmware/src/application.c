@@ -2,6 +2,7 @@
 
 #define FIRMWARE_VERSION "1.8.0"
 #define REPORT_INTERVAL_MS (15 * 60 * 1000) // 15 minute heartbeat
+#define UPDATE_INTERVAL (10 * 1000)         // 10 second update
 #define DELTA_TEMP 0.5f
 #define DELTA_HUMID 5.0f
 #define DELTA_ILLUM 5.0f
@@ -95,17 +96,17 @@ void application_init(void)
     // Initialize temperature sensor
     twr_tmp112_init(&temperature, TWR_I2C_I2C0, 0x48);
     twr_tmp112_set_event_handler(&temperature, tmp112_event_handler, NULL);
-    twr_tmp112_set_update_interval(&temperature, 10000);
+    twr_tmp112_set_update_interval(&temperature, UPDATE_INTERVAL);
 
     // Initialize humidity sensor
     twr_sht20_init(&humidity, TWR_I2C_I2C0, 0x40);
     twr_sht20_set_event_handler(&humidity, sht20_event_handler, NULL);
-    twr_sht20_set_update_interval(&humidity, 10000);
+    twr_sht20_set_update_interval(&humidity, UPDATE_INTERVAL);
 
     // Initialize illuminance sensor
     twr_opt3001_init(&illuminance, TWR_I2C_I2C0, 0x44);
     twr_opt3001_set_event_handler(&illuminance, opt3001_event_handler, NULL);
-    twr_opt3001_set_update_interval(&illuminance, 10000);
+    twr_opt3001_set_update_interval(&illuminance, UPDATE_INTERVAL);
 
     twr_radio_pub_string("info", FIRMWARE_VERSION);
 
