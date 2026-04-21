@@ -28,7 +28,8 @@ const monitorSchema = new mongoose.Schema(
         },
         pairedAt: {
             type: Date,
-            default: Date.now,
+            required: false,
+            default: null
         },
         status: {
             type: String,

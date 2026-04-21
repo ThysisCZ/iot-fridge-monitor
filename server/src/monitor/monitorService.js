@@ -73,20 +73,16 @@ const updateMonitor = async (monitorId, dtoIn, authenticatedUser) => {
     let monitor = await monitorModel.findById(monitorId);
 
     if (!monitor) {
-        if (authenticatedUser.role === 'gateway') {
-            //create the monitor if this radio ID is new
-            monitor = new monitorModel({
-                _id: monitorId,
-                gatewayId: authenticatedUser.gatewayId,
-                fridgeId: null,
-                firmwareVersion: dtoIn.firmwareVersion || "unknown",
-                batteryLevel: dtoIn.batteryLevel || 0,
-                status: dtoIn.status || "active",
-                pairedAt: null
-            });
-        } else {
-            throw createServiceError(404, 'monitorNotFound', 'Monitor not found.');
-        }
+        //create the monitor if this radio ID is new
+        monitor = new monitorModel({
+            _id: monitorId,
+            gatewayId: authenticatedUser.gatewayId,
+            fridgeId: null,
+            firmwareVersion: dtoIn.firmwareVersion || "unknown",
+            batteryLevel: dtoIn.batteryLevel || 0,
+            status: dtoIn.status || "active",
+            pairedAt: null
+        });
     }
 
     //check if the current gateway has access to the monitor
@@ -115,6 +111,8 @@ const addFridge = async (monitorId, fridgeId, authenticatedUser) => {
     if (!monitor) throw createServiceError(404, 'monitorNotFound', 'Monitor not found.');
 
     monitor.fridgeId = fridgeId;
+    monitor.pairedAt = new Date();
+
     const saved = await monitor.save();
     return saved.toJSON();
 };
