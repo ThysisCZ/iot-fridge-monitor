@@ -8,40 +8,6 @@ const createServiceError = (status, code, message) => {
     return error;
 };
 
-const createMonitor = async (dtoIn, authenticatedUser) => {
-    if (!authenticatedUser || !authenticatedUser.id) {
-        throw createServiceError(401, 'unauthorized', 'Access token required.');
-    }
-
-    if (!dtoIn.id) {
-        throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
-    }
-
-    const existingMonitor = await monitorModel.findById(dtoIn.id);
-    if (existingMonitor) {
-        throw createServiceError(400, 'monitorAlreadyExists', 'A monitor with this radio ID already exists.');
-    }
-
-    try {
-        //create a record with default factory values
-        const newMonitor = new monitorModel({
-            _id: dtoIn.id,
-            fridgeId: null,
-            gatewayId: dtoIn.gatewayId,
-            firmwareVersion: "1.0.0",
-            batteryLevel: 100,
-            status: "active",
-            pairedAt: new Date()
-        });
-
-        const savedMonitor = await newMonitor.save();
-
-        return savedMonitor.toJSON();
-    } catch (error) {
-        throw createServiceError(500, 'storageFailed', 'Failed to create monitor record in the database.');
-    }
-};
-
 const listMonitors = async (dtoIn, authenticatedUser) => {
     if (!authenticatedUser || !authenticatedUser.id) {
         throw createServiceError(401, 'unauthorized', 'Access token required.');
@@ -93,29 +59,39 @@ const getMonitor = async (monitorId, authenticatedUser) => {
 
 const updateMonitor = async (monitorId, dtoIn, authenticatedUser) => {
     if (!authenticatedUser || !authenticatedUser.gatewayId) {
-        return reject({
-            message: 'API key is required.',
-            code: 'unauthorized'
-        });
+        throw createServiceError(401, 'unauthorized', 'Valid API key is required.');
     }
 
-    const monitor = await monitorModel.findById(monitorId);
-    if (!monitor) throw createServiceError(404, 'monitorNotFound', 'Monitor not found.');
+    let monitor = await monitorModel.findById(monitorId);
 
+    if (!monitor) {
+        if (authenticatedUser.role === 'gateway') {
+            //create the monitor if this radio ID is new
+            monitor = new monitorModel({
+                _id: monitorId, //radio ID from Node-RED flow
+                gatewayId: authenticatedUser.gatewayId,
+                firmwareVersion: dtoIn.firmwareVersion || "unknown",
+                batteryLevel: dtoIn.batteryLevel,
+                status: dtoIn.status,
+                pairedAt: new Date()
+            });
+        } else {
+            throw createServiceError(404, 'monitorNotFound', 'Monitor not found.');
+        }
+    }
+
+    //check if the current gateway has access to the monitor
     if (authenticatedUser.role === 'gateway' && monitor.gatewayId.toString() !== authenticatedUser.gatewayId) {
-        throw createServiceError(403, 'forbidden', 'This gateway is not authorized to update this monitor.');
-    }
-
-    if (!dtoIn.id) {
-        throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
+        throw createServiceError(403, 'forbidden', 'Gateway mismatch.');
     }
 
     if (dtoIn.firmwareVersion) monitor.firmwareVersion = dtoIn.firmwareVersion;
-    if (dtoIn.batteryLevel) monitor.batteryLevel = dtoIn.batteryLevel;
+    if (dtoIn.batteryLevel !== undefined) monitor.batteryLevel = dtoIn.batteryLevel;
     if (dtoIn.status) monitor.status = dtoIn.status;
+    if (dtoIn.fridgeId) monitor.fridgeId = dtoIn.fridgeId;
 
-    monitor.lastSeen = new Date();
     await monitor.save();
+    return monitor;
 };
 
 const addFridge = async (monitorId, fridgeId, authenticatedUser) => {

@@ -31,7 +31,6 @@ router.get('/api/gateway/list', authenticateToken, gatewayController.listGateway
 router.get('/api/gateway/:id', authenticateToken, gatewayController.getGatewayController);
 router.patch('/api/gateway/update/:id', authenticateToken, gatewayController.updateGatewayController);
 router.delete('/api/gateway/delete/:id', authenticateToken, gatewayController.deleteGatewayController);
-router.post('/api/gateway/:gatewayId/monitor/create', authenticateToken, monitorController.createMonitorController);
 router.get('/api/gateway/:gatewayId/monitor/list', authenticateToken, monitorController.listMonitorsController);
 router.get('/api/monitor/:id', authenticateToken, monitorController.getMonitorController);
 router.patch('/api/monitor/update/:id', authenticateApiKey, monitorController.updateMonitorController);

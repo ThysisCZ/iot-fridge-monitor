@@ -1,15 +1,6 @@
 //dependencies
 const monitorService = require('./monitorService');
 
-const createMonitorController = async (req, res) => {
-    try {
-        const dtoOut = await monitorService.createMonitor(req.params.gatewayId, req.user);
-        return res.status(201).send(dtoOut);
-    } catch (error) {
-        return res.status(error.status || 500).send({ code: error.code, message: error.message });
-    }
-};
-
 const listMonitorsController = async (req, res) => {
     try {
         const dtoOut = await monitorService.listMonitors(req.params.gatewayId, req.user);

@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 //define monitor schema
 const monitorSchema = new mongoose.Schema(
     {
+        _id: { type: String }, // allow radio ID string
         fridgeId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Fridge",
@@ -22,7 +23,7 @@ const monitorSchema = new mongoose.Schema(
         },
         batteryLevel: {
             type: Number,
-            required: true,
+            required: false,
             min: 0,
         },
         pairedAt: {
