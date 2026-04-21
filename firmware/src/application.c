@@ -1,8 +1,8 @@
 #include <application.h>
 
 #define FIRMWARE_VERSION "1.8.0"
-#define REPORT_INTERVAL_MS (15 * 60 * 1000) // 15 minute heartbeat
-#define UPDATE_INTERVAL (10 * 1000)         // 10 second update
+#define REPORT_INTERVAL_MS (5 * 60 * 1000) // 5 minute heartbeat
+#define UPDATE_INTERVAL (10 * 1000)        // 10 second update
 #define DELTA_TEMP 0.5f
 #define DELTA_HUMID 5.0f
 #define DELTA_ILLUM 5.0f
