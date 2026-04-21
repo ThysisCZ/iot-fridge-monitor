@@ -28,7 +28,15 @@ const listMonitors = async (dtoIn, authenticatedUser) => {
             throw createServiceError(403, 'forbidden', 'Gateway not found or access denied.');
         }
 
-        const monitors = await monitorModel.find({ gatewayId: dtoIn.gatewayId });
+        //build the query dynamically
+        const query = { gatewayId: dtoIn.gatewayId };
+
+        //show only unassigned monitors
+        if (dtoIn.unassignedOnly === true) {
+            query.fridgeId = null;
+        }
+
+        const monitors = await monitorModel.find(query);
 
         return {
             itemList: monitors.map((monitor) => {
@@ -68,12 +76,13 @@ const updateMonitor = async (monitorId, dtoIn, authenticatedUser) => {
         if (authenticatedUser.role === 'gateway') {
             //create the monitor if this radio ID is new
             monitor = new monitorModel({
-                _id: monitorId, //radio ID from Node-RED flow
+                _id: monitorId,
                 gatewayId: authenticatedUser.gatewayId,
+                fridgeId: null,
                 firmwareVersion: dtoIn.firmwareVersion || "unknown",
-                batteryLevel: dtoIn.batteryLevel,
-                status: dtoIn.status,
-                pairedAt: new Date()
+                batteryLevel: dtoIn.batteryLevel || 0,
+                status: dtoIn.status || "active",
+                pairedAt: null
             });
         } else {
             throw createServiceError(404, 'monitorNotFound', 'Monitor not found.');
@@ -88,7 +97,6 @@ const updateMonitor = async (monitorId, dtoIn, authenticatedUser) => {
     if (dtoIn.firmwareVersion) monitor.firmwareVersion = dtoIn.firmwareVersion;
     if (dtoIn.batteryLevel !== undefined) monitor.batteryLevel = dtoIn.batteryLevel;
     if (dtoIn.status) monitor.status = dtoIn.status;
-    if (dtoIn.fridgeId) monitor.fridgeId = dtoIn.fridgeId;
 
     await monitor.save();
     return monitor;
