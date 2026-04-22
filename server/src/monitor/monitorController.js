@@ -62,7 +62,6 @@ const deleteMonitorController = async (req, res) => {
 };
 
 module.exports = {
-    createMonitorController,
     listMonitorsController,
     getMonitorController,
     updateMonitorController,

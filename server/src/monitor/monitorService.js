@@ -147,7 +147,6 @@ const deleteMonitor = async (monitorId, authenticatedUser) => {
 };
 
 module.exports = {
-    createMonitor,
     listMonitors,
     getMonitor,
     updateMonitor,
