@@ -20,18 +20,15 @@ module.exports.ingestMeasurement = (dtoIn, authenticatedUser) => {
             });
         }
 
-        // logical bounds check
-        const { temperature, humidity, illuminance, monitorId } = dtoIn;
-
-        if (!temperature || !humidity || !illuminance || !monitorId) {
+        if (!dtoIn.temperature || !dtoIn.humidity || !dtoIn.illuminance ||
+            !dtoIn.batteryLevel || !dtoIn.monitorId || !dtoIn.timestamp) {
             throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
         }
 
         if (temperature < -40 || temperature > 70 || humidity < 0 || humidity > 100 || illuminance < 0 || illuminance > 10000) {
             return reject({
                 message: 'Data contains out of bounds keys.',
-                code: 'outOfBoundsKeys',
-                param: { monitorId, temperature, humidity, illuminance },
+                code: 'outOfBoundsKeys'
             });
         }
 
@@ -40,13 +37,12 @@ module.exports.ingestMeasurement = (dtoIn, authenticatedUser) => {
 
         // verify fridge monitor connection
         monitorModel
-            .findById(monitorId)
+            .findById(dtoIn.monitorId)
             .then((monitor) => {
                 if (!monitor || !monitor.fridgeId) {
                     throw {
                         message: 'Fridge Monitor is not paired.',
-                        code: 'monitorNotPaired',
-                        param: { monitorId },
+                        code: 'monitorNotPaired'
                     };
                 }
 
@@ -58,8 +54,7 @@ module.exports.ingestMeasurement = (dtoIn, authenticatedUser) => {
                 if (!fridge) {
                     throw {
                         message: 'Fridge not found.',
-                        code: 'fridgeNotFound',
-                        param: { fridgeId: foundMonitor.fridgeId },
+                        code: 'fridgeNotFound'
                     };
                 }
 
@@ -76,9 +71,11 @@ module.exports.ingestMeasurement = (dtoIn, authenticatedUser) => {
                 const newMeasurement = new measurementModel({
                     monitorId: monitorId,
                     fridgeId: foundMonitor.fridgeId,
-                    temperature,
-                    humidity,
-                    illuminance,
+                    batteryLevel: dtoIn.batteryLevel,
+                    temperature: dtoIn.temperature,
+                    humidity: dtoIn.humdity,
+                    illuminance: dtoIn.illuminance,
+                    timestamp: dtoIn.timestamp
                 });
 
                 return newMeasurement.save();
@@ -164,8 +161,7 @@ module.exports.ingestMeasurement = (dtoIn, authenticatedUser) => {
                 if (error.name === 'MongoError' || error.name === 'ValidationError') {
                     reject({
                         message: 'Failed to store measurement data to the database.',
-                        code: 'storageFailed',
-                        param: { timestamp: new Date(), cause: error.message },
+                        code: 'storageFailed'
                     });
                 } else {
                     reject(error);
@@ -303,8 +299,7 @@ module.exports.listMeasurements = (fridgeId, filters, authenticatedUser) => {
             .catch((err) => {
                 reject({
                     message: 'Failed to load measurements.',
-                    code: 'measurementsLoadFailed',
-                    param: { cause: err.message }
+                    code: 'measurementsLoadFailed'
                 });
             });
     });

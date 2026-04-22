@@ -7,7 +7,7 @@ const fridgeSchema = new mongoose.Schema(
         ownerId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
-            required: true
+            required: false
         },
         monitorId: {
             type: mongoose.Schema.Types.ObjectId,
@@ -17,7 +17,7 @@ const fridgeSchema = new mongoose.Schema(
         },
         memberIds: {
             type: Array,
-            required: true
+            required: false
         },
         name: {
             type: String,
@@ -27,7 +27,7 @@ const fridgeSchema = new mongoose.Schema(
         },
         location: {
             type: String,
-            required: true,
+            required: false,
             minLength: 1,
             maxLength: 20
         },
