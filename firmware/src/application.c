@@ -7,10 +7,10 @@
 #define DELTA_HUMID 5.0f
 #define DELTA_ILLUM 5.0f
 
-// Sensor instances
-twr_tmp112_t temperature;
-twr_sht20_t humidity;
-twr_opt3001_t illuminance;
+// Sensor readiness
+bool temp_ready = false;
+bool humid_ready = false;
+bool illum_ready = false;
 
 float last_pub_temp = -100.0f;
 float last_pub_humid = 0.0f;
@@ -20,12 +20,18 @@ twr_tick_t next_report_tick = 0;
 // Central function to send all data
 void report_all_data()
 {
+    // Cancel data sending if sensors aren't ready yet
+    if (!temp_ready || !humid_ready || !illum_ready)
+    {
+        return;
+    }
+
     float t, h, i, b;
 
     // Get current values
-    twr_tmp112_get_temperature_celsius(&temperature, &t);
-    twr_sht20_get_humidity_percentage(&humidity, &h);
-    twr_opt3001_get_illuminance_lux(&illuminance, &i);
+    twr_module_climate_get_temperature_celsius(&t);
+    twr_module_climate_get_humidity_percentage(&h);
+    twr_module_climate_get_illuminance_lux(&i);
     twr_module_battery_get_voltage(&b);
 
     // Publish everything
@@ -38,77 +44,68 @@ void report_all_data()
     last_pub_temp = t;
     last_pub_humid = h;
     last_pub_illum = i;
+    temp_ready = humid_ready = illum_ready = false;
+
     next_report_tick = twr_tick_get() + REPORT_INTERVAL_MS;
 
     twr_log_debug("Full report sent. T:%.2f H:%.2f I:%.2f", t, h, i);
 }
 
-// Temperature handler
-void tmp112_event_handler(twr_tmp112_t *self, twr_tmp112_event_t event, void *event_param)
+void climate_module_event_handler(twr_module_climate_event_t event, void *event_param)
 {
-    if (event == TWR_TMP112_EVENT_UPDATE)
-    {
-        float cur_t;
-        twr_tmp112_get_temperature_celsius(self, &cur_t);
+    float val;
 
-        if (twr_tick_get() >= next_report_tick || fabsf(cur_t - last_pub_temp) >= DELTA_TEMP)
+    // Temperature event
+    if (event == TWR_MODULE_CLIMATE_EVENT_UPDATE_THERMOMETER)
+    {
+        twr_module_climate_get_temperature_celsius(&val);
+        if (fabsf(val - last_pub_temp) >= DELTA_TEMP)
         {
-            report_all_data();
+            temp_ready = true;
         }
     }
-}
 
-// Humidity handler
-void sht20_event_handler(twr_sht20_t *self, twr_sht20_event_t event, void *event_param)
-{
-    if (event == TWR_SHT20_EVENT_UPDATE)
+    // Humidity event
+    if (event == TWR_MODULE_CLIMATE_EVENT_UPDATE_HYGROMETER)
     {
-        float cur_h;
-        twr_sht20_get_humidity_percentage(self, &cur_h);
-
-        if (twr_tick_get() >= next_report_tick || fabsf(cur_h - last_pub_humid) >= DELTA_HUMID)
+        twr_module_climate_get_humidity_percentage(&val);
+        if (fabsf(val - last_pub_humid) >= DELTA_HUMID)
         {
-            report_all_data();
+            humid_ready = true;
         }
     }
-}
 
-// Illuminance Handler
-void opt3001_event_handler(twr_opt3001_t *self, twr_opt3001_event_t event, void *event_param)
-{
-    if (event == TWR_OPT3001_EVENT_UPDATE)
+    // Illuminance event
+    if (event == TWR_MODULE_CLIMATE_EVENT_UPDATE_LUX_METER)
     {
-        float cur_i;
-        twr_opt3001_get_illuminance_lux(self, &cur_i);
-
-        if (twr_tick_get() >= next_report_tick || fabsf(cur_i - last_pub_illum) >= DELTA_ILLUM)
+        twr_module_climate_get_illuminance_lux(&val);
+        if (fabsf(val - last_pub_illum) >= DELTA_ILLUM)
         {
-            report_all_data();
+            illum_ready = true;
         }
     }
+
+    // Check heartbeat
+    if (twr_tick_get() >= next_report_tick)
+    {
+        temp_ready = humid_ready = illum_ready = true;
+    }
+
+    report_all_data();
 }
 
 void application_init(void)
 {
     twr_log_init(TWR_LOG_LEVEL_DEBUG, TWR_LOG_TIMESTAMP_ABS);
+
+    twr_module_climate_init();
+
+    twr_module_climate_set_event_handler(climate_module_event_handler, NULL);
+    twr_module_climate_set_update_interval_all_sensors(UPDATE_INTERVAL);
+
     twr_radio_init(TWR_RADIO_MODE_NODE_SLEEPING);
-
-    // Initialize temperature sensor
-    twr_tmp112_init(&temperature, TWR_I2C_I2C0, 0x48);
-    twr_tmp112_set_event_handler(&temperature, tmp112_event_handler, NULL);
-    twr_tmp112_set_update_interval(&temperature, UPDATE_INTERVAL);
-
-    // Initialize humidity sensor
-    twr_sht20_init(&humidity, TWR_I2C_I2C0, 0x40);
-    twr_sht20_set_event_handler(&humidity, sht20_event_handler, NULL);
-    twr_sht20_set_update_interval(&humidity, UPDATE_INTERVAL);
-
-    // Initialize illuminance sensor
-    twr_opt3001_init(&illuminance, TWR_I2C_I2C0, 0x44);
-    twr_opt3001_set_event_handler(&illuminance, opt3001_event_handler, NULL);
-    twr_opt3001_set_update_interval(&illuminance, UPDATE_INTERVAL);
+    twr_module_battery_init();
+    twr_module_battery_set_update_interval(UPDATE_INTERVAL);
 
     twr_radio_pub_string("info", FIRMWARE_VERSION);
-
-    report_all_data();
 }
