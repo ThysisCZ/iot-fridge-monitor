@@ -23,6 +23,10 @@ module.exports.ingestMeasurement = (dtoIn, authenticatedUser) => {
         // logical bounds check
         const { temperature, humidity, illuminance, monitorId } = dtoIn;
 
+        if (!temperature || !humidity || !illuminance || !monitorId) {
+            throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
+        }
+
         if (temperature < -40 || temperature > 70 || humidity < 0 || humidity > 100 || illuminance < 0 || illuminance > 10000) {
             return reject({
                 message: 'Data contains out of bounds keys.',
@@ -179,6 +183,10 @@ module.exports.getMeasurementById = (id, authenticatedUser) => {
                 message: 'Access token required.',
                 code: 'unauthorized'
             });
+        }
+
+        if (!id) {
+            throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
         }
 
         measurementModel

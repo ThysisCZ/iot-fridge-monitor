@@ -55,6 +55,10 @@ const getMonitor = async (monitorId, authenticatedUser) => {
         throw createServiceError(401, 'unauthorized', 'Access token required.');
     }
 
+    if (!monitorId) {
+        throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
+    }
+
     const monitor = await monitorModel.findById(monitorId);
     if (!monitor) throw createServiceError(404, 'monitorNotFound', 'Monitor not found.');
 
@@ -66,7 +70,7 @@ const updateMonitor = async (monitorId, dtoIn, authenticatedUser) => {
         throw createServiceError(401, 'unauthorized', 'API key is required.');
     }
 
-    if (!dtoIn.firmwareVersion, !dtoIn.status) {
+    if (!dtoIn.firmwareVersion || !dtoIn.status || !monitorId) {
         throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
     }
 
@@ -103,6 +107,10 @@ const addFridge = async (monitorId, fridgeId, authenticatedUser) => {
         throw createServiceError(401, 'unauthorized', 'Access token required.');
     }
 
+    if (!monitorId || !fridgeId) {
+        throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
+    }
+
     const monitor = await monitorModel.findById(monitorId);
     if (!monitor) throw createServiceError(404, 'monitorNotFound', 'Monitor not found.');
 
@@ -118,6 +126,10 @@ const removeFridge = async (monitorId, authenticatedUser) => {
         throw createServiceError(401, 'unauthorized', 'Access token required.');
     }
 
+    if (!monitorId) {
+        throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
+    }
+
     const monitor = await monitorModel.findById(monitorId);
     if (!monitor) throw createServiceError(404, 'monitorNotFound', 'Monitor not found.');
 
@@ -129,6 +141,10 @@ const removeFridge = async (monitorId, authenticatedUser) => {
 const deleteMonitor = async (monitorId, authenticatedUser) => {
     if (!authenticatedUser || !authenticatedUser.id) {
         throw createServiceError(401, 'unauthorized', 'Access token required.');
+    }
+
+    if (!monitorId) {
+        throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
     }
 
     const monitor = await monitorModel.findById(monitorId);

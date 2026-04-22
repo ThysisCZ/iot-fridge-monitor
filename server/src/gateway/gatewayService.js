@@ -72,6 +72,10 @@ const getGateway = async (gatewayId, authenticatedUser) => {
         throw createServiceError(401, 'unauthorized', 'Access token required.');
     }
 
+    if (!gatewayId) {
+        throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
+    }
+
     try {
         const gateway = await gatewayModel.findById(gatewayId);
 
@@ -93,7 +97,7 @@ const updateGateway = async (gatewayId, dtoIn, authenticatedUser) => {
         throw createServiceError(401, 'unauthorized', 'Access token required.');
     }
 
-    if (!dtoIn.name || dtoIn.name.length < 1 || dtoIn.name.length > 20) {
+    if (!dtoIn.name || dtoIn.name.length < 1 || dtoIn.name.length > 20 || !gatewayId) {
         throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
     }
 
@@ -119,6 +123,10 @@ const updateGateway = async (gatewayId, dtoIn, authenticatedUser) => {
 const deleteGateway = async (gatewayId, authenticatedUser) => {
     if (!authenticatedUser || !authenticatedUser.id) {
         throw createServiceError(401, 'unauthorized', 'Access token required.');
+    }
+
+    if (!gatewayId) {
+        throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
     }
 
     try {

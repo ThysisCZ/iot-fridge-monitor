@@ -94,9 +94,9 @@ module.exports.loginUserService = (email, password) => {
                 );
 
                 resolve({
-                    id: user.id,
-                    name: user.name,
-                    email: user.email,
+                    id: foundUser.id,
+                    name: foundUser.name,
+                    email: foundUser.email,
                     token: token
                 });
             })

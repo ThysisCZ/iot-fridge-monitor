@@ -11,6 +11,14 @@ const createServiceError = (status, code, message) => {
 
 const getFridgeData = async (id, authenticatedUser) => {
 
+    if (!authenticatedUser || !authenticatedUser.id) {
+        throw createServiceError(401, 'unauthorized', 'Access token required.');
+    }
+
+    if (!id) {
+        throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
+    }
+
     const foundFridge = await fridgeModel.findById(id);
 
     //Error if fridge does not exist
@@ -44,6 +52,10 @@ const createFridge = async (dtoIn, authenticatedUser) => {
         throw createServiceError(401, 'unauthorized', 'Access token required.');
     }
 
+    if (!dtoIn.name) {
+        throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
+    }
+
     //check for duplicate fridge name per user
     const existingFridge = await fridgeModel.findOne({ name: dtoIn.name, ownerId: authenticatedUser.id });
     if (existingFridge) {
@@ -73,6 +85,10 @@ const getFridge = async (id, authenticatedUser) => {
         throw createServiceError(401, 'unauthorized', 'Access token required.');
     }
 
+    if (!id) {
+        throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
+    }
+
     const foundFridge = await getFridgeData(id, authenticatedUser);
 
     return foundFridge.toJSON();
@@ -81,6 +97,10 @@ const getFridge = async (id, authenticatedUser) => {
 const updateFridge = async (id, dtoIn, authenticatedUser) => {
     if (!authenticatedUser || !authenticatedUser.id) {
         throw createServiceError(401, 'unauthorized', 'Access token required.');
+    }
+
+    if (!id || !dtoIn.name) {
+        throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
     }
 
     const foundFridge = await getFridgeData(id, authenticatedUser);
@@ -99,6 +119,10 @@ const updateFridge = async (id, dtoIn, authenticatedUser) => {
 const deleteFridge = async (id, authenticatedUser) => {
     if (!authenticatedUser || !authenticatedUser.id) {
         throw createServiceError(401, 'unauthorized', 'Access token required.');
+    }
+
+    if (!id) {
+        throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
     }
 
     //Validate if user is authorized to access the fridge and that fridge exists
@@ -121,6 +145,10 @@ const getFridgeMembers = async (id, authenticatedUser) => {
         throw createServiceError(401, 'unauthorized', 'Access token required.');
     }
 
+    if (!id) {
+        throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
+    }
+
     const foundFridge = await getFridgeData(id, authenticatedUser);
     const members = foundFridge.memberIds.map((id) => userModel.findById(id).then((user) => { return { name: user.name, email: user.email } }))
 
@@ -131,6 +159,10 @@ const getFridgeMembers = async (id, authenticatedUser) => {
 const inviteFridgeMember = async (id, dtoIn, authenticatedUser) => {
     if (!authenticatedUser || !authenticatedUser.id) {
         throw createServiceError(401, 'unauthorized', 'Access token required.');
+    }
+
+    if (!id || !dtoIn.name) {
+        throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
     }
 
     const foundFridge = await getFridgeData(id, authenticatedUser);
@@ -162,6 +194,10 @@ const inviteFridgeMember = async (id, dtoIn, authenticatedUser) => {
 const removeFridgeMember = async (id, memberId, authenticatedUser) => {
     if (!authenticatedUser || !authenticatedUser.id) {
         throw createServiceError(401, 'unauthorized', 'Access token required.');
+    }
+
+    if (!id || !memberId) {
+        throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
     }
 
     const foundFridge = await getFridgeData(id, authenticatedUser);
