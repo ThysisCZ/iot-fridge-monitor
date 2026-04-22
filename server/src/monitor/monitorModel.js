@@ -33,7 +33,8 @@ const monitorSchema = new mongoose.Schema(
         },
         status: {
             type: String,
-            enum: ["active", "offline", "sleeping"],
+            enum: ["active", "offline"],
+            required: true,
             default: "active",
         },
     },

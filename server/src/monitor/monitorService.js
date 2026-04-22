@@ -55,10 +55,6 @@ const getMonitor = async (monitorId, authenticatedUser) => {
         throw createServiceError(401, 'unauthorized', 'Access token required.');
     }
 
-    if (!dtoIn.id) {
-        throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
-    }
-
     const monitor = await monitorModel.findById(monitorId);
     if (!monitor) throw createServiceError(404, 'monitorNotFound', 'Monitor not found.');
 
@@ -67,7 +63,11 @@ const getMonitor = async (monitorId, authenticatedUser) => {
 
 const updateMonitor = async (monitorId, dtoIn, authenticatedUser) => {
     if (!authenticatedUser || !authenticatedUser.gatewayId) {
-        throw createServiceError(401, 'unauthorized', 'Valid API key is required.');
+        throw createServiceError(401, 'unauthorized', 'API key is required.');
+    }
+
+    if (!dtoIn.firmwareVersion, !dtoIn.status) {
+        throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
     }
 
     let monitor = await monitorModel.findById(monitorId);
@@ -78,9 +78,9 @@ const updateMonitor = async (monitorId, dtoIn, authenticatedUser) => {
             _id: monitorId,
             gatewayId: authenticatedUser.gatewayId,
             fridgeId: null,
-            firmwareVersion: dtoIn.firmwareVersion || "unknown",
+            firmwareVersion: dtoIn.firmwareVersion,
             batteryLevel: dtoIn.batteryLevel || 0,
-            status: dtoIn.status || "active",
+            status: dtoIn.status,
             pairedAt: null
         });
     }
@@ -90,9 +90,9 @@ const updateMonitor = async (monitorId, dtoIn, authenticatedUser) => {
         throw createServiceError(403, 'forbidden', 'Gateway mismatch.');
     }
 
-    if (dtoIn.firmwareVersion) monitor.firmwareVersion = dtoIn.firmwareVersion;
-    if (dtoIn.batteryLevel !== undefined) monitor.batteryLevel = dtoIn.batteryLevel;
-    if (dtoIn.status) monitor.status = dtoIn.status;
+    monitor.firmwareVersion = dtoIn.firmwareVersion;
+    monitor.batteryLevel = dtoIn.batteryLevel;
+    monitor.status = dtoIn.status;
 
     await monitor.save();
     return monitor;
@@ -101,10 +101,6 @@ const updateMonitor = async (monitorId, dtoIn, authenticatedUser) => {
 const addFridge = async (monitorId, fridgeId, authenticatedUser) => {
     if (!authenticatedUser || !authenticatedUser.id) {
         throw createServiceError(401, 'unauthorized', 'Access token required.');
-    }
-
-    if (!dtoIn.id) {
-        throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
     }
 
     const monitor = await monitorModel.findById(monitorId);
