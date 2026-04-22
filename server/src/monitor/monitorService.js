@@ -42,7 +42,7 @@ const listMonitors = async (dtoIn, authenticatedUser) => {
         return {
             itemList: monitors.map((monitor) => {
                 const dtoOut = monitor.toJSON();
-                dtoOut.pairedAt = new Date(dtoOut.pairedAt).toISOString();
+                dtoOut.pairedAt = monitor.pairedAt ? monitor.pairedAt.toISOString() : null;
                 return dtoOut;
             })
         };
@@ -63,7 +63,7 @@ const getMonitor = async (monitorId, authenticatedUser) => {
     const monitor = await monitorModel.findById(monitorId);
     if (!monitor) throw createServiceError(404, 'monitorNotFound', 'Monitor not found.');
 
-    return monitor.toJSON();
+    return monitor.toJSON();;
 };
 
 const updateMonitor = async (monitorId, dtoIn, authenticatedUser) => {
@@ -99,7 +99,7 @@ const updateMonitor = async (monitorId, dtoIn, authenticatedUser) => {
     monitor.status = dtoIn.status;
 
     await monitor.save();
-    return monitor;
+    return monitor.toJSON();;
 };
 
 const addFridge = async (monitorId, fridgeId, authenticatedUser) => {
@@ -114,28 +114,53 @@ const addFridge = async (monitorId, fridgeId, authenticatedUser) => {
     const monitor = await monitorModel.findById(monitorId);
     if (!monitor) throw createServiceError(404, 'monitorNotFound', 'Monitor not found.');
 
+    //verify that the user owns the gateway this monitor is attached to
+    const gateway = await gatewayModel.findOne({ _id: monitor.gatewayId, ownerId: authenticatedUser.id });
+    if (!gateway) throw createServiceError(403, 'forbidden', 'You do not have permission to pair this monitor.');
+
+    //check if the monitor is already paired
+    if (monitor.fridgeId && monitor.fridgeId.toString() !== fridgeId) {
+        throw createServiceError(400, 'monitorAlreadyPaired', 'This monitor is already assigned to another fridge.');
+    }
+
     monitor.fridgeId = fridgeId;
     monitor.pairedAt = new Date();
+    await monitor.save();
 
-    const saved = await monitor.save();
-    return saved.toJSON();
+    //update the fridge
+    const fridge = await fridgeModel.findOneAndUpdate(
+        { _id: fridgeId, ownerId: authenticatedUser.id },
+        { monitorId: monitorId }
+    );
+
+    return monitor.toJSON();;
 };
 
-const removeFridge = async (monitorId, authenticatedUser) => {
+const removeFridge = async (monitorId, fridgeId, authenticatedUser) => {
     if (!authenticatedUser || !authenticatedUser.id) {
         throw createServiceError(401, 'unauthorized', 'Access token required.');
     }
 
-    if (!monitorId) {
+    if (!monitorId || !fridgeId) {
         throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
     }
 
     const monitor = await monitorModel.findById(monitorId);
     if (!monitor) throw createServiceError(404, 'monitorNotFound', 'Monitor not found.');
 
+    const gateway = await gatewayModel.findOne({ _id: monitor.gatewayId, ownerId: authenticatedUser.id });
+    if (!gateway) throw createServiceError(403, 'forbidden', 'You do not have permission to unpair this monitor.');
+
     monitor.fridgeId = null;
-    const saved = await monitor.save();
-    return saved.toJSON();
+    monitor.pairedAt = null;
+    await monitor.save();
+
+    await fridgeModel.findOneAndUpdate(
+        { _id: fridgeId, ownerId: authenticatedUser.id },
+        { monitorId: null }
+    );
+
+    return monitor.toJSON();;
 };
 
 const deleteMonitor = async (monitorId, authenticatedUser) => {
