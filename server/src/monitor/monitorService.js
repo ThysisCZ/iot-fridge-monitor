@@ -1,5 +1,6 @@
 //dependencies
 const monitorModel = require('./monitorModel');
+const gatewayModel = require('../gateway/gatewayModel');
 
 const createServiceError = (status, code, message) => {
     const error = new Error(message);

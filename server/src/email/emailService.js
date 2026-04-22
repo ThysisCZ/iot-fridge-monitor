@@ -1,5 +1,6 @@
 //dependencies
 require('dotenv').config();
+const userModel = require('../user/userModel');
 const SibApiV3Sdk = require('sib-api-v3-sdk');
 
 //configure Brevo API key
@@ -19,9 +20,6 @@ const SENDER = {
 //send alert email
 module.exports.sendAlertEmail = (userId, sensorType, currentValue, minThreshold, maxThreshold) => {
     return new Promise((resolve, reject) => {
-
-        //load user email by userId
-        const userModel = require('../user/userModel');
 
         userModel.findById(userId)
             .then((user) => {

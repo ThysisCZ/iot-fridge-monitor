@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const revokedTokenModel = require('../revokedToken/revokedTokenModel');
+const gatewayModel = require('../gateway/gatewayModel');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
