@@ -83,7 +83,7 @@ const updateMonitor = async (monitorId, dtoIn, authenticatedUser) => {
             gatewayId: authenticatedUser.gatewayId,
             fridgeId: null,
             firmwareVersion: dtoIn.firmwareVersion,
-            batteryLevel: dtoIn.batteryLevel || 0,
+            batteryLevel: null,
             status: dtoIn.status,
             pairedAt: null
         });
@@ -95,7 +95,6 @@ const updateMonitor = async (monitorId, dtoIn, authenticatedUser) => {
     }
 
     monitor.firmwareVersion = dtoIn.firmwareVersion;
-    monitor.batteryLevel = dtoIn.batteryLevel;
     monitor.status = dtoIn.status;
 
     await monitor.save();
