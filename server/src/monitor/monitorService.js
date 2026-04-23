@@ -1,6 +1,8 @@
 //dependencies
 const monitorModel = require('./monitorModel');
 const gatewayModel = require('../gateway/gatewayModel');
+const fridgeModel = require('../fridge/fridgeModel');
+const mongoose = require('mongoose');
 
 const createServiceError = (status, code, message) => {
     const error = new Error(message);
@@ -119,13 +121,23 @@ const addFridge = async (monitorId, fridgeId, authenticatedUser) => {
         throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
     }
 
-    try {
-        const monitor = await monitorModel.findById(monitorId);
-        if (!monitor) throw createServiceError(404, 'monitorNotFound', 'Monitor not found.');
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-        //verify that the user owns the gateway this monitor is attached to
+    try {
+        const monitor = await monitorModel.findById(monitorId).session(session);
+        const fridge = await fridgeModel.findById(fridgeId).session(session);
+
+        if (!monitor) throw createServiceError(404, 'monitorNotFound', 'Monitor not found.');
+        if (!fridge) throw createServiceError(404, 'fridgeNotFound', 'Fridge not found.');
+
+        //verify gateway and fridge ownership
         const gateway = await gatewayModel.findOne({ _id: monitor.gatewayId, ownerId: authenticatedUser.id });
-        if (!gateway) throw createServiceError(403, 'forbidden', 'You do not have permission to pair this monitor.');
+        if (!gateway) throw createServiceError(403, 'forbidden', 'You do not own this monitor.');
+
+        if (fridge.ownerId.toString() !== authenticatedUser.id) {
+            throw createServiceError(403, 'forbidden', 'You do not own this fridge.');
+        }
 
         //check if the monitor is already paired
         if (monitor.fridgeId && monitor.fridgeId.toString() !== fridgeId) {
@@ -134,17 +146,24 @@ const addFridge = async (monitorId, fridgeId, authenticatedUser) => {
 
         monitor.fridgeId = fridgeId;
         monitor.pairedAt = new Date();
-        await monitor.save();
+        fridge.monitorId = monitorId;
 
-        //update the fridge
-        const fridge = await fridgeModel.findOneAndUpdate(
-            { _id: fridgeId, ownerId: authenticatedUser.id },
-            { monitorId: monitorId }
-        );
+        await monitor.save({ session });
+        await fridge.save({ session });
 
-        return monitor.toJSON();
+        //commit the changes
+        await session.commitTransaction();
+
+        return {
+            monitor: monitor.toJSON(),
+            fridge: fridge.toJSON()
+        };
     } catch (error) {
+        //rollback changes
+        await session.abortTransaction();
         throw createServiceError(500, 'monitorUpdateFailed', 'Failed to assign monitor to fridge in the database.');
+    } finally {
+        await session.endSession();
     }
 };
 
@@ -157,24 +176,37 @@ const removeFridge = async (monitorId, fridgeId, authenticatedUser) => {
         throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
     }
 
-    try {
-        const monitor = await monitorModel.findById(monitorId);
-        if (!monitor) throw createServiceError(404, 'monitorNotFound', 'Monitor not found.');
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
+    try {
+        const monitor = await monitorModel.findById(monitorId).session(session);
+        const fridge = await fridgeModel.findById(fridgeId).session(session);
+
+        if (!monitor) throw createServiceError(404, 'monitorNotFound', 'Monitor not found.');
+        if (!fridge) throw createServiceError(404, 'fridgeNotFound', 'Fridge not found.');
+
+        //verify ownership
         const gateway = await gatewayModel.findOne({ _id: monitor.gatewayId, ownerId: authenticatedUser.id });
-        if (!gateway) throw createServiceError(403, 'forbidden', 'You do not have permission to unpair this monitor.');
+        if (!gateway || fridge.ownerId.toString() !== authenticatedUser.id) {
+            throw createServiceError(403, 'forbidden', 'You do not have permission to unpair this monitor.');
+        }
 
         monitor.fridgeId = null;
         monitor.pairedAt = null;
-        await monitor.save();
+        fridge.monitorId = null;
 
-        await fridgeModel.findOneAndUpdate(
-            { _id: fridgeId, ownerId: authenticatedUser.id },
-            { monitorId: null }
-        );
+        await monitor.save({ session });
+        await fridge.save({ session });
 
-        return monitor.toJSON();
+        await session.commitTransaction();
+
+        return {
+            monitor: monitor.toJSON(),
+            fridge: fridge.toJSON()
+        };
     } catch (error) {
+        await session.abortTransaction();
         throw createServiceError(500, 'monitorUpdateFailed', 'Failed to unassign monitor in the database.');
     }
 };
@@ -200,6 +232,8 @@ const deleteMonitor = async (monitorId, authenticatedUser) => {
         return { id: monitorId, status: 'deleted' };
     } catch (error) {
         throw createServiceError(500, 'monitorDeleteFailed', 'Failed to delete monitor from the database.');
+    } finally {
+        await session.endSession();
     }
 };
 

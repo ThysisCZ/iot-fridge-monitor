@@ -10,7 +10,7 @@ const fridgeSchema = new mongoose.Schema(
             required: false
         },
         monitorId: {
-            type: mongoose.Schema.Types.ObjectId,
+            type: String,
             ref: "Monitor",
             required: false,
             default: null

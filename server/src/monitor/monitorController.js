@@ -34,7 +34,7 @@ const updateMonitorController = async (req, res) => {
 const addFridgeController = async (req, res) => {
     try {
         const { monitorId, fridgeId } = req.params;
-        const dtoOut = await monitorService.assignFridge(monitorId, fridgeId, req.user);
+        const dtoOut = await monitorService.addFridge(monitorId, fridgeId, req.user);
         return res.status(200).send(dtoOut);
     } catch (error) {
         return res.status(error.status || 500).send({ code: error.code, message: error.message });

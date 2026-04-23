@@ -5,7 +5,7 @@ const mongoose = require("mongoose");
 const measurementSchema = new mongoose.Schema(
     {
         monitorId: {
-            type: mongoose.Schema.Types.ObjectId,
+            type: String,
             ref: "Monitor",
             required: true,
         },
