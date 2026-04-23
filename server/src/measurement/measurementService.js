@@ -9,6 +9,13 @@ const emailService = require('../email/emailService');
 // 5, 15, 30 minutes or 1, 6, 12, 24 hours
 const VALID_GRANULARITIES = [5, 15, 30, 60, 360, 720, 1440];
 
+const createServiceError = (status, code, message) => {
+    const error = new Error(message);
+    error.status = status;
+    error.code = code;
+    return error;
+};
+
 // POST /measurement/ingest
 module.exports.ingestMeasurement = (dtoIn, authenticatedUser) => {
     return new Promise((resolve, reject) => {
@@ -20,12 +27,13 @@ module.exports.ingestMeasurement = (dtoIn, authenticatedUser) => {
             });
         }
 
-        if (!dtoIn.temperature || !dtoIn.humidity || !dtoIn.illuminance ||
-            !dtoIn.batteryLevel || !dtoIn.monitorId || !dtoIn.timestamp) {
+        if (!dtoIn.monitorId || isNaN(dtoIn.batteryLevel) || isNaN(dtoIn.temperature) ||
+            isNaN(dtoIn.humidity) || isNaN(dtoIn.illuminance) || !dtoIn.timestamp) {
             throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
         }
 
-        if (temperature < -40 || temperature > 70 || humidity < 0 || humidity > 100 || illuminance < 0 || illuminance > 10000) {
+        if (dtoIn.temperature < -40 || dtoIn.temperature > 70 || dtoIn.humidity < 0 ||
+            dtoIn.humidity > 100 || dtoIn.illuminance < 0 || dtoIn.illuminance > 10000) {
             return reject({
                 message: 'Data contains out of bounds keys.',
                 code: 'outOfBoundsKeys'
@@ -69,11 +77,11 @@ module.exports.ingestMeasurement = (dtoIn, authenticatedUser) => {
 
                 // save measurement data
                 const newMeasurement = new measurementModel({
-                    monitorId: monitorId,
+                    monitorId: dtoIn.monitorId,
                     fridgeId: foundMonitor.fridgeId,
                     batteryLevel: dtoIn.batteryLevel,
                     temperature: dtoIn.temperature,
-                    humidity: dtoIn.humdity,
+                    humidity: dtoIn.humidity,
                     illuminance: dtoIn.illuminance,
                     timestamp: dtoIn.timestamp
                 });
@@ -111,7 +119,7 @@ module.exports.ingestMeasurement = (dtoIn, authenticatedUser) => {
                             const violationDurationSeconds = (now - violation.violationStart) / 1000;
 
                             if (violationDurationSeconds >= rule.durationThreshold) {
-                                alertsTriggered.push(rule.id);
+                                alertsTriggered.push(rule._id);
 
                                 const memberIds = foundFridge.memberIds || [];
 
@@ -119,7 +127,7 @@ module.exports.ingestMeasurement = (dtoIn, authenticatedUser) => {
                                     const newNotification = new notificationModel({
                                         userId: userId,
                                         fridgeId: foundMonitor.fridgeId,
-                                        ruleId: rule.id,
+                                        ruleId: rule._id,
                                         message: `Alert: ${rule.sensorType} is ${currentValue} (Limit: ${rule.minThreshold}-${rule.maxThreshold})`
                                     });
 
@@ -147,7 +155,7 @@ module.exports.ingestMeasurement = (dtoIn, authenticatedUser) => {
                     // wait for all notifications to be saved and emails sent
                     return Promise.all(notificationPromises).then(() => {
                         return {
-                            measurementId: savedMeasurement.id,
+                            measurementId: savedMeasurement._id,
                             fridgeId: foundMonitor.fridgeId,
                             alertsTriggered
                         };
@@ -158,14 +166,10 @@ module.exports.ingestMeasurement = (dtoIn, authenticatedUser) => {
                 resolve(result);
             })
             .catch((error) => {
-                if (error.name === 'MongoError' || error.name === 'ValidationError') {
-                    reject({
-                        message: 'Failed to store measurement data to the database.',
-                        code: 'storageFailed'
-                    });
-                } else {
-                    reject(error);
-                }
+                reject({
+                    message: error,
+                    code: 'storageFailed'
+                });
             });
     });
 };

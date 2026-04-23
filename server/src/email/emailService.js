@@ -8,9 +8,6 @@ const defaultClient = SibApiV3Sdk.ApiClient.instance;
 const apiKey = defaultClient.authentications['api-key'];
 apiKey.apiKey = process.env.BREVO_API_KEY;
 
-//initialize transactional emails API
-const transactionalEmailsApi = new SibApiV3Sdk.TransactionalEmailsApi();
-
 //sender details
 const SENDER = {
     name: 'Fridge Monitor',
@@ -19,6 +16,14 @@ const SENDER = {
 
 //send alert email
 module.exports.sendAlertEmail = (userId, sensorType, currentValue, minThreshold, maxThreshold) => {
+
+    //initialize transactional emails API
+    const transactionalEmailsApi = new SibApiV3Sdk.TransactionalEmailsApi();
+
+    console.log("Checking Brevo Config...");
+    console.log("Key defined:", !!process.env.BREVO_API_KEY);
+    console.log("Sender email:", process.env.BREVO_SENDER_EMAIL);
+
     return new Promise((resolve, reject) => {
 
         userModel.findById(userId)
