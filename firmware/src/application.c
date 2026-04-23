@@ -1,8 +1,9 @@
 #include <application.h>
 
 #define FIRMWARE_VERSION "1.8.0"
-#define REPORT_INTERVAL_MS (100 * 1000) // 100 second heartbeat
-#define UPDATE_INTERVAL (10 * 1000)     // 10 second update
+#define REPORT_INTERVAL_MS (100 * 1000)   // 100 second heartbeat
+#define UPDATE_INTERVAL (10 * 1000)       // 10 second update
+#define SCHEDULE_INTERVAL (5 * 60 * 1000) // 5 minute schedule
 #define DELTA_TEMP 0.5f
 #define DELTA_HUMID 5.0f
 #define DELTA_ILLUM 5.0f
@@ -16,6 +17,9 @@ float last_pub_temp = -100.0f;
 float last_pub_humid = 0.0f;
 float last_pub_illum = 0.0f;
 twr_tick_t next_report_tick = 0;
+
+twr_scheduler_task_id_t info_task_id;
+twr_tick_t info_task_tick = 5000;
 
 // Central function to send all data
 void report_all_data()
@@ -94,6 +98,26 @@ void climate_module_event_handler(twr_module_climate_event_t event, void *event_
     report_all_data();
 }
 
+// Dedicated task for info topic
+void info_task(void *param)
+{
+    (void)param;
+
+    // Attempt to publish
+    bool success = twr_radio_pub_string("info", FIRMWARE_VERSION);
+
+    if (success)
+    {
+        twr_log_debug("Info sent successfully.");
+        twr_scheduler_plan_current_relative(SCHEDULE_INTERVAL);
+    }
+    else
+    {
+        twr_log_error("Failed to send info, retrying in 5 seconds...");
+        twr_scheduler_plan_current_relative(info_task_tick);
+    }
+}
+
 void application_init(void)
 {
     twr_log_init(TWR_LOG_LEVEL_DEBUG, TWR_LOG_TIMESTAMP_ABS);
@@ -107,5 +131,5 @@ void application_init(void)
     twr_module_battery_init();
     twr_module_battery_set_update_interval(UPDATE_INTERVAL);
 
-    twr_radio_pub_string("info", FIRMWARE_VERSION);
+    info_task_id = twr_scheduler_register(info_task, NULL, info_task_tick);
 }
