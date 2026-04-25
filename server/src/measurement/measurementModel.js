@@ -26,6 +26,10 @@ const measurementSchema = new mongoose.Schema(
             type: Number,
             required: true,
         },
+        timestamp: {
+            type: String,
+            required: true,
+        }
     },
     {
         timestamps: true,
