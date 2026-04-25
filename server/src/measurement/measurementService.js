@@ -174,7 +174,7 @@ module.exports.ingestMeasurement = (dtoIn, authenticatedUser) => {
             .catch((error) => {
                 reject({
                     message: error,
-                    code: error
+                    code: 'storageFailed'
                 });
             });
     });
@@ -206,19 +206,17 @@ module.exports.getMeasurementById = (id, authenticatedUser) => {
 };
 
 const aggregateDataPoint = (dataPoint, dataPointStart) => {
-    if (dataPoint.length > 0) {
-        // calculate arithmetic mean for the graph data point
-        const aggTemperature = dataPoint.reduce((sum, m) => sum + m.temperature, 0) / dataPoint.length;
-        const aggHumidity = dataPoint.reduce((sum, m) => sum + m.humidity, 0) / dataPoint.length;
-        const aggIlluminance = dataPoint.reduce((sum, m) => sum + m.illuminance, 0) / dataPoint.length;
+    // calculate arithmetic mean for the graph data point
+    const aggTemperature = dataPoint.reduce((sum, m) => sum + m.temperature, 0) / dataPoint.length;
+    const aggHumidity = dataPoint.reduce((sum, m) => sum + m.humidity, 0) / dataPoint.length;
+    const aggIlluminance = dataPoint.reduce((sum, m) => sum + m.illuminance, 0) / dataPoint.length;
 
-        return {
-            timestamp: new Date(dataPointStart).toISOString(),
-            temperature: aggTemperature.toFixed(2),
-            humidity: aggHumidity.toFixed(2),
-            illuminance: aggIlluminance.toFixed(2)
-        };
-    }
+    return {
+        timestamp: new Date(dataPointStart).toISOString(),
+        temperature: aggTemperature.toFixed(2),
+        humidity: aggHumidity.toFixed(2),
+        illuminance: aggIlluminance.toFixed(2)
+    };
 }
 
 // GET /fridge/:fridgeId/measurement/list
@@ -274,36 +272,38 @@ module.exports.listMeasurements = (fridgeId, filters, authenticatedUser) => {
                 // apply granularity aggregation if specified
                 if (filters.granularity) {
                     const granularityMs = filters.granularity * 60 * 1000;
+                    const startMs = new Date(filters.startDate).getTime();
+                    const endMs = new Date(filters.endDate).getTime();
+
                     const aggregated = [];
                     let dataPoint = [];
                     let dataPointStart = null;
 
-                    measurements.forEach((measurement) => {
-                        const measurementTime = new Date(measurement.createdAt).getTime();
+                    // loop through every expected data point
+                    for (let currentSlot = startMs; currentSlot <= endMs; currentSlot += granularityMs) {
 
-                        if (dataPointStart === null) {
-                            dataPointStart = measurementTime;
-                        }
+                        const dataPoint = measurements.filter(m => {
+                            const mTime = new Date(m.createdAt).getTime();
+                            return mTime >= currentSlot && mTime < currentSlot + granularityMs;
+                        });
 
-                        if (measurementTime - dataPointStart < granularityMs) {
-                            dataPoint.push(measurement);
+                        if (dataPoint.length > 0) {
+                            aggregated.push(aggregateDataPoint(dataPoint, currentSlot));
                         } else {
-                            if (dataPoint.length > 0) {
-                                // calculate arithmetic mean for the graph data point
-                                const aggTemperature = dataPoint.reduce((sum, m) => sum + m.temperature, 0) / dataPoint.length;
-                                const aggHumidity = dataPoint.reduce((sum, m) => sum + m.humidity, 0) / dataPoint.length;
-                                const aggIlluminance = dataPoint.reduce((sum, m) => sum + m.illuminance, 0) / dataPoint.length;
-
-                                aggregated.push(aggregateDataPoint(dataPoint, dataPointStart));
-                            }
-
-                            dataPoint = [measurement];
-                            dataPointStart = measurementTime;
+                            // handle graph segment with missing data
+                            aggregated.push({
+                                timestamp: new Date(currentSlot).toISOString(),
+                                temperature: null,
+                                humidity: null,
+                                illuminance: null
+                            });
                         }
-                    });
+                    }
 
                     // handle last data point
-                    aggregated.push(aggregateDataPoint(dataPoint, dataPointStart));
+                    if (dataPoint.length > 0) {
+                        aggregated.push(aggregateDataPoint(dataPoint, dataPointStart));
+                    }
 
                     return resolve({ itemList: aggregated });
                 }
