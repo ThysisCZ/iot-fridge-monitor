@@ -5,6 +5,7 @@ const ruleModel = require('../rule/ruleModel');
 const notificationModel = require('../notification/notificationModel');
 const thresholdViolationModel = require('../thresholdViolation/thresholdViolationModel');
 const emailService = require('../email/emailService');
+const mongoose = require('mongoose');
 
 // 5, 15, 30 minutes or 1, 6, 12, 24 hours
 const VALID_GRANULARITIES = [5, 15, 30, 60, 360, 720, 1440];
@@ -204,6 +205,22 @@ module.exports.getMeasurementById = (id, authenticatedUser) => {
     });
 };
 
+const aggregateDataPoint = (dataPoint, dataPointStart) => {
+    if (dataPoint.length > 0) {
+        // calculate arithmetic mean for the graph data point
+        const aggTemperature = dataPoint.reduce((sum, m) => sum + m.temperature, 0) / dataPoint.length;
+        const aggHumidity = dataPoint.reduce((sum, m) => sum + m.humidity, 0) / dataPoint.length;
+        const aggIlluminance = dataPoint.reduce((sum, m) => sum + m.illuminance, 0) / dataPoint.length;
+
+        return {
+            timestamp: new Date(dataPointStart).toISOString(),
+            temperature: aggTemperature.toFixed(2),
+            humidity: aggHumidity.toFixed(2),
+            illuminance: aggIlluminance.toFixed(2)
+        };
+    }
+}
+
 // GET /fridge/:fridgeId/measurement/list
 module.exports.listMeasurements = (fridgeId, filters, authenticatedUser) => {
     return new Promise((resolve, reject) => {
@@ -254,49 +271,39 @@ module.exports.listMeasurements = (fridgeId, filters, authenticatedUser) => {
             .find(query)
             .sort({ createdAt: 1 })
             .then((measurements) => {
-
                 // apply granularity aggregation if specified
                 if (filters.granularity) {
                     const granularityMs = filters.granularity * 60 * 1000;
                     const aggregated = [];
-                    let bucket = [];
-                    let bucketStart = null;
+                    let dataPoint = [];
+                    let dataPointStart = null;
 
                     measurements.forEach((measurement) => {
                         const measurementTime = new Date(measurement.createdAt).getTime();
 
-                        if (bucketStart === null) {
-                            bucketStart = measurementTime;
+                        if (dataPointStart === null) {
+                            dataPointStart = measurementTime;
                         }
 
-                        if (measurementTime - bucketStart < granularityMs) {
-                            bucket.push(measurement);
+                        if (measurementTime - dataPointStart < granularityMs) {
+                            dataPoint.push(measurement);
                         } else {
-                            if (bucket.length > 0) {
+                            if (dataPoint.length > 0) {
+                                // calculate arithmetic mean for the graph data point
+                                const aggTemperature = dataPoint.reduce((sum, m) => sum + m.temperature, 0) / dataPoint.length;
+                                const aggHumidity = dataPoint.reduce((sum, m) => sum + m.humidity, 0) / dataPoint.length;
+                                const aggIlluminance = dataPoint.reduce((sum, m) => sum + m.illuminance, 0) / dataPoint.length;
 
-                                // calculate arithmetic mean for the bucket
-                                aggregated.push({
-                                    timestamp: new Date(bucketStart).toISOString(),
-                                    temperature: bucket.reduce((sum, m) => sum + m.temperature, 0) / bucket.length,
-                                    humidity: bucket.reduce((sum, m) => sum + m.humidity, 0) / bucket.length,
-                                    illuminance: bucket.reduce((sum, m) => sum + m.illuminance, 0) / bucket.length,
-                                });
+                                aggregated.push(aggregateDataPoint(dataPoint, dataPointStart));
                             }
 
-                            bucket = [measurement];
-                            bucketStart = measurementTime;
+                            dataPoint = [measurement];
+                            dataPointStart = measurementTime;
                         }
                     });
 
-                    // handle last bucket
-                    if (bucket.length > 0) {
-                        aggregated.push({
-                            timestamp: new Date(bucketStart).toISOString(),
-                            temperature: bucket.reduce((sum, m) => sum + m.temperature, 0) / bucket.length,
-                            humidity: bucket.reduce((sum, m) => sum + m.humidity, 0) / bucket.length,
-                            illuminance: bucket.reduce((sum, m) => sum + m.illuminance, 0) / bucket.length,
-                        });
-                    }
+                    // handle last data point
+                    aggregated.push(aggregateDataPoint(dataPoint, dataPointStart));
 
                     return resolve({ itemList: aggregated });
                 }

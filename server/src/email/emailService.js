@@ -51,7 +51,7 @@ module.exports.sendAlertEmail = (userId, sensorType, currentValue, minThreshold,
                     <p>A threshold violation has been detected in your fridge.</p>
                     <table>
                         <tr>
-                            <td><strong>Condition</strong></td>
+                            <td><strong>Conditionㅤㅤㅤ</strong></td>
                             <td>${sensorType}</td>
                         </tr>
                         <tr>
