@@ -20,10 +20,6 @@ module.exports.sendAlertEmail = (userId, sensorType, currentValue, minThreshold,
     //initialize transactional emails API
     const transactionalEmailsApi = new SibApiV3Sdk.TransactionalEmailsApi();
 
-    console.log("Checking Brevo Config...");
-    console.log("Key defined:", !!process.env.BREVO_API_KEY);
-    console.log("Sender email:", process.env.BREVO_SENDER_EMAIL);
-
     return new Promise((resolve, reject) => {
 
         userModel.findById(userId)

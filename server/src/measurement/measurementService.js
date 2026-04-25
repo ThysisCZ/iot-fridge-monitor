@@ -114,6 +114,11 @@ module.exports.ingestMeasurement = (dtoIn, authenticatedUser) => {
                                 });
                             }
 
+                            // check if this violation has already been notified
+                            if (violation.notified === true) {
+                                continue;
+                            }
+
                             // check if duration threshold has been exceeded
                             const now = new Date();
                             const violationDurationSeconds = (now - violation.violationStart) / 1000;
@@ -168,7 +173,7 @@ module.exports.ingestMeasurement = (dtoIn, authenticatedUser) => {
             .catch((error) => {
                 reject({
                     message: error,
-                    code: 'storageFailed'
+                    code: error
                 });
             });
     });
