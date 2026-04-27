@@ -38,14 +38,26 @@ function AuthPage() {
                 <TabsList className="mb-6 grid h-11 w-full grid-cols-2 rounded-xl bg-muted p-1">
                     <TabsTrigger
                         value="login"
-                        className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                        className="
+                            rounded-lg
+                            data-[state=active]:bg-background
+                            data-[state=active]:shadow-sm
+                            data-[state=active]:text-foreground
+                            text-muted-foreground
+                            "
                     >
                         Login
                     </TabsTrigger>
 
                     <TabsTrigger
                         value="register"
-                        className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                        className="
+                            rounded-lg
+                            data-[state=active]:bg-background
+                            data-[state=active]:shadow-sm
+                            data-[state=active]:text-foreground
+                            text-muted-foreground
+                            "
                     >
                         Register
                     </TabsTrigger>
