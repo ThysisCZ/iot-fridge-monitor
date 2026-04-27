@@ -72,7 +72,7 @@ module.exports.ingestMeasurement = (dtoIn, authenticatedUser) => {
                 // update monitor battery level
                 await monitorModel.findByIdAndUpdate(dtoIn.monitorId, {
                     batteryLevel: dtoIn.batteryLevel,
-                    lastSeen: new Date(),
+                    pairedAt: new Date(),
                     status: 'active'
                 });
 

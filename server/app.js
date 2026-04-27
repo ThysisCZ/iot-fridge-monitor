@@ -42,10 +42,10 @@ mongoose.connect(URI)
 
 //run every 10 minutes
 cron.schedule('*/10 * * * *', async () => {
-    const timeout = new Date(Date.now() - (60 * 60 * 1000)); //1 hour threshold
+    const timeout = new Date(Date.now() - (15 * 60 * 1000)); //15 minute timeout
 
     await monitorModel.updateMany(
-        { lastSeen: { $lt: timeout }, status: { $ne: 'offline' } },
+        { pairedAt: { $lt: timeout }, status: { $ne: 'offline' } },
         { status: 'offline' }
     );
 });
