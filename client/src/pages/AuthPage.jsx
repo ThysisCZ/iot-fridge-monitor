@@ -29,25 +29,23 @@ function AuthPage() {
     const [registerServerError, setRegisterServerError] = useState("");
     const [isLoginSubmitting, setIsLoginSubmitting] = useState(false);
     const [isRegisterSubmitting, setIsRegisterSubmitting] = useState(false);
+    const [loginData, setLoginData] = useState({
+        email: "",
+        password: "",
+    });
+    const [registerData, setRegisterData] = useState({
+        name: "",
+        email: "",
+        password: "",
+    });
+    const [loginErrors, setLoginErrors] = useState({});
+    const [registerErrors, setRegisterErrors] = useState({});
 
     if (isAuthLoading) return null;
 
     if (isAuthenticated) {
         return <Navigate to="/fridges" replace />;
     }
-    const [loginData, setLoginData] = useState({
-        email: "",
-        password: "",
-    });
-
-    const [registerData, setRegisterData] = useState({
-        name: "",
-        email: "",
-        password: "",
-    });
-
-    const [loginErrors, setLoginErrors] = useState({});
-    const [registerErrors, setRegisterErrors] = useState({});
 
     const isEmailValid = (email) => {
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
