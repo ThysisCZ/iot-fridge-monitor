@@ -56,8 +56,8 @@ export function SensorLineChart({
       </CardHeader>
 
       <CardContent>
-        <ResponsiveContainer width="100%" height={180}>
-          <LineChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -10 }}>
+        <ResponsiveContainer width="100%" height={260}>
+          <LineChart data={data} margin={{ top: 16, right: 8, bottom: 0, left: -10 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
             <XAxis
               dataKey="label"
@@ -75,10 +75,22 @@ export function SensorLineChart({
               width={44}
             />
             {thresholdMax != null && (
-              <ReferenceLine y={thresholdMax} stroke="#EF4444" strokeDasharray="4 3" strokeWidth={1.5} />
+              <ReferenceLine
+                y={thresholdMax}
+                stroke="#EF4444"
+                strokeDasharray="4 3"
+                strokeWidth={1.5}
+                label={{ value: `${thresholdMax}${unit}`, position: 'insideTopLeft', fontSize: 10, fill: '#EF4444', fontWeight: 600 }}
+              />
             )}
             {thresholdMin != null && (
-              <ReferenceLine y={thresholdMin} stroke="#EF4444" strokeDasharray="4 3" strokeWidth={1.5} />
+              <ReferenceLine
+                y={thresholdMin}
+                stroke="#EF4444"
+                strokeDasharray="4 3"
+                strokeWidth={1.5}
+                label={{ value: `${thresholdMin}${unit}`, position: 'insideTopLeft', fontSize: 10, fill: '#EF4444', fontWeight: 600 }}
+              />
             )}
             <Tooltip
               contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #E5E7EB' }}

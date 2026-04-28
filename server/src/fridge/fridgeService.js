@@ -43,7 +43,7 @@ const listFridges = async (authenticatedUser) => {
     //Find all fridges with authenticated user id in the memberIds array
     const fridges = await fridgeModel.find({ memberIds: authenticatedUser.id });
 
-    return fridges.toJSON();
+    return fridges.map((f) => f.toJSON());
 
 }
 

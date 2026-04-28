@@ -3,6 +3,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import LandingPage from "./pages/LandingPage";
 import AuthPage from "./pages/AuthPage";
 import FridgesPage from "./pages/FridgesPage";
+import FridgeDetailPage from "./pages/FridgeDetailPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
@@ -17,6 +18,14 @@ function App() {
           element={
             <ProtectedRoute>
               <FridgesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/fridges/:id"
+          element={
+            <ProtectedRoute>
+              <FridgeDetailPage />
             </ProtectedRoute>
           }
         />
