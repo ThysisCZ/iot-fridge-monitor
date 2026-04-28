@@ -8,7 +8,6 @@ function polar(cx, cy, r, deg) {
   return { x: cx + r * Math.cos(rad), y: cy - r * Math.sin(rad) };
 }
 
-// Clockwise arc (decreasing angle in math convention = clockwise on screen)
 function arcPath(cx, cy, r, startDeg, sweepDeg) {
   if (sweepDeg <= 0) return "";
   const s = polar(cx, cy, r, startDeg);
@@ -28,9 +27,9 @@ export function GaugeChart({
   className,
 }) {
   const CX = 85,
-    CY = 76,
+    CY = 90,
     R = 54,
-    SW = 10;
+    SW = 18;
 
   const valid = Number.isFinite(value);
   const ratio = valid
@@ -45,8 +44,7 @@ export function GaugeChart({
 
   return (
     <div className={cn("flex flex-col items-center", className)}>
-      <svg viewBox="0 0 170 122" className="w-full max-w-[160px]">
-        {/* Track */}
+      <svg viewBox="0 0 170 136" className="w-full max-w-[280px]">
         <path
           d={trackPath}
           fill="none"
@@ -55,7 +53,6 @@ export function GaugeChart({
           strokeLinecap="round"
         />
 
-        {/* Fill */}
         {fillPath && (
           <path
             d={fillPath}
@@ -101,20 +98,30 @@ export function GaugeChart({
           );
         })}
 
-        {/* Current value */}
-        <text
-          x={CX}
-          y={CY - 4}
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fontSize="21"
-          fontWeight="700"
-          fill={valid ? color : "#9CA3AF"}
-        >
-          {valid
-            ? `${value.toLocaleString("cs-CZ", { maximumFractionDigits: 1 })} ${unit}`
-            : `— ${unit}`}
-        </text>
+        {valid ? (
+          <text
+            x={CX}
+            y={CY - 4}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontSize="21"
+            fontWeight="700"
+            fill={color}
+          >
+            {value.toLocaleString("cs-CZ", { maximumFractionDigits: 1 })} {unit}
+          </text>
+        ) : (
+          <text
+            x={CX}
+            y={CY - 4}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontSize="11"
+            fill="#9CA3AF"
+          >
+            no data
+          </text>
+        )}
       </svg>
 
       <p className="text-xs text-muted-foreground -mt-3">{label}</p>
