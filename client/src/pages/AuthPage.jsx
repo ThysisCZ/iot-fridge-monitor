@@ -1,5 +1,8 @@
-import { Link } from "react-router";
+import { Link, useNavigate, Navigate } from "react-router";
 import { useState } from "react";
+import { useAuth } from "@/context/AuthContext";
+
+/* UI */
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,116 +19,149 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 
+
+
 function AuthPage() {
-  const [loginData, setLoginData] = useState({
-    email: "",
-    password: "",
-  });
+    const navigate = useNavigate();
+    const { login, register, isAuthenticated, isAuthLoading } = useAuth();
 
-  const [registerData, setRegisterData] = useState({
-    name: "",
-    email: "",
-    password: "",
-  });
+    const [loginServerError, setLoginServerError] = useState("");
+    const [registerServerError, setRegisterServerError] = useState("");
+    const [isLoginSubmitting, setIsLoginSubmitting] = useState(false);
+    const [isRegisterSubmitting, setIsRegisterSubmitting] = useState(false);
 
-  const [loginErrors, setLoginErrors] = useState({});
-  const [registerErrors, setRegisterErrors] = useState({});
+    if (isAuthLoading) return null;
 
-  const isEmailValid = (email) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  };
-
-  const validateField = (fieldName, value) => {
-    if (fieldName === "name") {
-      if (!value.trim()) return "Name is required.";
-      if (value.length > 20) return "Name can have maximum 20 characters.";
+    if (isAuthenticated) {
+        return <Navigate to="/fridges" replace />;
     }
+    const [loginData, setLoginData] = useState({
+        email: "",
+        password: "",
+    });
 
-    if (fieldName === "email") {
-      if (!value.trim()) return "Email is required.";
-      if (!isEmailValid(value)) return "Email must be in a valid format.";
-    }
+    const [registerData, setRegisterData] = useState({
+        name: "",
+        email: "",
+        password: "",
+    });
 
-    if (fieldName === "password") {
-      if (!value) return "Password is required.";
-      if (value.length < 8) return "Password must have at least 8 characters.";
-    }
+    const [loginErrors, setLoginErrors] = useState({});
+    const [registerErrors, setRegisterErrors] = useState({});
 
-    return "";
-  };
-
-  const handleLoginChange = (event) => {
-    const { name, value } = event.target;
-
-    setLoginData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
-    setLoginErrors((prev) => ({
-      ...prev,
-      [name]: validateField(name, value),
-    }));
-  };
-
-  const handleRegisterChange = (event) => {
-    const { name, value } = event.target;
-
-    setRegisterData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
-    setRegisterErrors((prev) => ({
-      ...prev,
-      [name]: validateField(name, value),
-    }));
-  };
-
-  const validateLogin = () => {
-    const errors = {
-      email: validateField("email", loginData.email),
-      password: validateField("password", loginData.password),
+    const isEmailValid = (email) => {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     };
 
-    return Object.fromEntries(
-      Object.entries(errors).filter(([, message]) => message)
-    );
-  };
+    const validateField = (fieldName, value) => {
+        if (fieldName === "name") {
+        if (!value.trim()) return "Name is required.";
+        if (value.length > 20) return "Name can have maximum 20 characters.";
+        }
 
-  const validateRegister = () => {
-    const errors = {
-      name: validateField("name", registerData.name),
-      email: validateField("email", registerData.email),
-      password: validateField("password", registerData.password),
+        if (fieldName === "email") {
+        if (!value.trim()) return "Email is required.";
+        if (!isEmailValid(value)) return "Email must be in a valid format.";
+        }
+
+        if (fieldName === "password") {
+        if (!value) return "Password is required.";
+        if (value.length < 8) return "Password must have at least 8 characters.";
+        }
+
+        return "";
     };
 
-    return Object.fromEntries(
-      Object.entries(errors).filter(([, message]) => message)
-    );
-  };
+    const handleLoginChange = (event) => {
+        const { name, value } = event.target;
 
-  const handleLoginSubmit = (event) => {
-    event.preventDefault();
+        setLoginData((prev) => ({
+        ...prev,
+        [name]: value,
+        }));
 
-    const errors = validateLogin();
-    setLoginErrors(errors);
+        setLoginErrors((prev) => ({
+        ...prev,
+        [name]: validateField(name, value),
+        }));
+    };
 
-    if (Object.keys(errors).length > 0) return;
+    const handleRegisterChange = (event) => {
+        const { name, value } = event.target;
 
-    console.log("LOGIN DTO_IN:", loginData);
-  };
+        setRegisterData((prev) => ({
+        ...prev,
+        [name]: value,
+        }));
 
-  const handleRegisterSubmit = (event) => {
-    event.preventDefault();
+        setRegisterErrors((prev) => ({
+        ...prev,
+        [name]: validateField(name, value),
+        }));
+    };
 
-    const errors = validateRegister();
-    setRegisterErrors(errors);
+    const validateLogin = () => {
+        const errors = {
+        email: validateField("email", loginData.email),
+        password: validateField("password", loginData.password),
+        };
 
-    if (Object.keys(errors).length > 0) return;
+        return Object.fromEntries(
+        Object.entries(errors).filter(([, message]) => message)
+        );
+    };
 
-    console.log("REGISTER DTO_IN:", registerData);
-  };
+    const validateRegister = () => {
+        const errors = {
+        name: validateField("name", registerData.name),
+        email: validateField("email", registerData.email),
+        password: validateField("password", registerData.password),
+        };
+
+        return Object.fromEntries(
+        Object.entries(errors).filter(([, message]) => message)
+        );
+    };
+
+    const handleLoginSubmit = async (event) => {
+        event.preventDefault();
+
+        const errors = validateLogin();
+        setLoginErrors(errors);
+        setLoginServerError("");
+
+        if (Object.keys(errors).length > 0) return;
+
+        try {
+            setIsLoginSubmitting(true);
+            await login(loginData);
+            navigate("/fridges", { replace: true });
+        } catch (error) {
+            setLoginServerError(error.message);
+        } finally {
+            setIsLoginSubmitting(false);
+        }
+    };
+
+    const handleRegisterSubmit = async (event) => {
+        event.preventDefault();
+
+        const errors = validateRegister();
+        setRegisterErrors(errors);
+        setRegisterServerError("");
+
+        if (Object.keys(errors).length > 0) return;
+
+        try {
+            setIsRegisterSubmitting(true);
+            await register(registerData);
+            navigate("/fridges", { replace: true });
+        } catch (error) {
+            setRegisterServerError(error.message);
+        } finally {
+            setIsRegisterSubmitting(false);
+        }
+    };
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
@@ -196,8 +232,14 @@ function AuthPage() {
                   )}
                 </div>
 
-                <Button type="submit" className="w-full">
-                  Login
+                {loginServerError && (
+                    <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+                        {loginServerError}
+                    </div>
+                )}
+
+                <Button type="submit" className="w-full" disabled={isLoginSubmitting}>
+                    {isLoginSubmitting ? "Logging in..." : "Login"}
                 </Button>
               </form>
             </TabsContent>
@@ -253,9 +295,14 @@ function AuthPage() {
                     </p>
                   )}
                 </div>
+                {registerServerError && (
+                    <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+                        {registerServerError}
+                    </div>
+                )}
 
-                <Button type="submit" className="w-full">
-                  Create account
+                <Button type="submit" className="w-full" disabled={isRegisterSubmitting}>
+                    {isRegisterSubmitting ? "Creating account..." : "Create account"}
                 </Button>
               </form>
             </TabsContent>

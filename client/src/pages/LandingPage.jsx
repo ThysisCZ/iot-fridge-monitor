@@ -1,8 +1,19 @@
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Navigate } from "react-router";
+import { useAuth } from "@/context/AuthContext";
 
 function LandingPage() {
+  const { isAuthenticated, isAuthLoading } = useAuth();
+
+    if (isAuthLoading) {
+        return null;
+    }
+
+    if (isAuthenticated) {
+        return <Navigate to="/fridges" replace />;
+    }
+
   return (
     <main className="min-h-screen bg-background text-foreground">
       <section className="mx-auto flex min-h-screen max-w-6xl items-center px-6">
