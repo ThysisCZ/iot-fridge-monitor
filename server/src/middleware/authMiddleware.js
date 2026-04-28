@@ -42,13 +42,14 @@ module.exports.authenticateApiKey = async (req, res, next) => {
         }
 
         //find the gateway based on API key
-        const gateway = await gatewayModel.findOne({ apiKey: apiKey, status: 'active' });
+        const gateway = await gatewayModel.findOne({ apiKey: apiKey });
 
         if (!gateway) {
             return res.status(401).send({ message: "Invalid API Key." });
         }
 
         gateway.lastSeen = new Date();
+        gateway.status = 'active';
         gateway.save();
 
         //attach the gateway owner ID to req.user

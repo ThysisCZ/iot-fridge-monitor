@@ -42,10 +42,25 @@ mongoose.connect(URI)
 
 //run every 10 minutes
 cron.schedule('*/10 * * * *', async () => {
-    const timeout = new Date(Date.now() - (15 * 60 * 1000)); //15 minute timeout
+    const timeout = new Date(Date.now() - (15 * 60 * 1000)); //15 minute threshold
 
-    await monitorModel.updateMany(
-        { pairedAt: { $lt: timeout }, status: { $ne: 'offline' } },
-        { status: 'offline' }
-    );
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        await monitorModel.updateMany(
+            { updatedAt: { $lt: timeout }, status: 'active' },
+            { status: 'offline' }
+        ).session(session);
+
+        await gatewayModel.updateMany(
+            { lastSeen: { $lt: timeout }, status: 'active' },
+            { status: 'offline' }
+        ).session(session);
+
+        await session.commitTransaction();
+    } catch (error) {
+        await session.abortTransaction();
+        console.log("Status update failed: ", error);
+    }
 });
