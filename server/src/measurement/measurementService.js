@@ -4,7 +4,6 @@ const fridgeModel = require('../fridge/fridgeModel');
 const ruleModel = require('../rule/ruleModel');
 const notificationModel = require('../notification/notificationModel');
 const thresholdViolationModel = require('../thresholdViolation/thresholdViolationModel');
-const gatewayModel = require('../gateway/gatewayModel');
 const emailService = require('../email/emailService');
 const mongoose = require('mongoose');
 

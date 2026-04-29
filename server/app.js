@@ -9,6 +9,7 @@ const mongoose = require('mongoose');
 const routes = require('./routes/routes');
 const cron = require('node-cron');
 const monitorModel = require('./src/monitor/monitorModel');
+const gatewayModel = require('./src/gateway/gatewayModel');
 
 const PORT = 8000;
 const USERNAME = process.env.DB_USER;

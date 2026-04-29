@@ -9,41 +9,20 @@ const createServiceError = (status, code, message) => {
     return error;
 };
 
-const getFridgeData = async (id, authenticatedUser) => {
-
-    if (!authenticatedUser || !authenticatedUser.id) {
-        throw createServiceError(401, 'unauthorized', 'Access token required.');
-    }
-
-    if (!id) {
-        throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
-    }
-
-    const foundFridge = await fridgeModel.findById(id);
-
-    //Error if fridge does not exist
-    if (!foundFridge) {
-        throw createServiceError(400, 'fridgeNotFound', `Fridge with fridgeId '${id}' does not exist.`);
-    }
-
-    //Check if auth user is a member or owner
-    if (foundFridge.ownerId != authenticatedUser.id && foundFridge.memberIds.findIndex(authenticatedUser.id) == -1) {
-        throw createServiceError(403, 'forbidden', 'You are not authorized to access this fridge.');
-    }
-
-    return foundFridge;
-}
-
 const listFridges = async (authenticatedUser) => {
 
     if (!authenticatedUser || !authenticatedUser.id) {
         throw createServiceError(401, 'unauthorized', 'Access token required.');
     }
 
-    //Find all fridges with authenticated user id in the memberIds array
-    const fridges = await fridgeModel.find({ memberIds: authenticatedUser.id });
+    try {
+        //Find all fridges with authenticated user id in the memberIds array
+        const fridges = await fridgeModel.find({ memberIds: authenticatedUser.id });
 
-    return fridges.map((f) => f.toJSON());
+        return fridges.map((f) => f.toJSON());
+    } catch (error) {
+        throw createServiceError(500, 'retrievalFailed', 'Failed to return list of fridges from the database.');
+    }
 
 }
 
@@ -89,9 +68,13 @@ const getFridge = async (id, authenticatedUser) => {
         throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
     }
 
-    const foundFridge = await getFridgeData(id, authenticatedUser);
+    try {
+        const foundFridge = await fridgeModel.findById(id);
 
-    return foundFridge.toJSON();
+        return foundFridge.toJSON();
+    } catch (error) {
+        throw createServiceError(500, 'storageFailed', 'Failed to get fridge record from the database.');
+    }
 };
 
 const updateFridge = async (id, dtoIn, authenticatedUser) => {
@@ -103,14 +86,19 @@ const updateFridge = async (id, dtoIn, authenticatedUser) => {
         throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
     }
 
-    const foundFridge = await getFridgeData(id, authenticatedUser);
-
     // Try updating fridge
     try {
-        foundFridge = { ...foundFridge, ...dtoIn };
-        const savedFridge = await foundFridge.save();
+        const foundFridge = await fridgeModel.findById(id);
 
-        return savedFridge.toJSON();
+        foundFridge.name = dtoIn.name;
+
+        if (dtoIn.description) {
+            foundFridge.description = dtoIn.description;
+        }
+
+        await foundFridge.save();
+
+        return foundFridge.toJSON();
     } catch (error) {
         throw createServiceError(500, 'storageFailed', 'Failed to update fridge record in the database.');
     }
@@ -125,18 +113,19 @@ const deleteFridge = async (id, authenticatedUser) => {
         throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
     }
 
-    //Validate if user is authorized to access the fridge and that fridge exists
-    const foundFridge = await getFridgeData(id, authenticatedUser);
-    //Only owner can delete
-    if (foundFridge.ownerId != authenticatedUser.id) {
-        throw createServiceError(403, 'forbidden', 'You are not authorized to delete this fridge.');
-    }
-
     try {
-        const result = await fridgeModel.deleteOne({ fridgeId: id });
-        return result.toJSON();
+        //Validate if user is authorized to access the fridge and that fridge exists
+        const foundFridge = await fridgeModel.findById(id);
+
+        //Only owner can delete
+        if (foundFridge.ownerId != authenticatedUser.id) {
+            throw createServiceError(403, 'forbidden', 'You are not authorized to delete this fridge.');
+        }
+
+        await fridgeModel.deleteOne({ _id: id });
+        return { id: id, status: 'deleted' };
     } catch (error) {
-        throw createServiceError(500, 'storageFailed', 'Failed to delete fridge record in the database.');
+        throw createServiceError(500, 'deleteFailed', 'Failed to delete fridge record in the database.');
     }
 }
 
@@ -149,10 +138,18 @@ const getFridgeMembers = async (id, authenticatedUser) => {
         throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
     }
 
-    const foundFridge = await getFridgeData(id, authenticatedUser);
-    const members = foundFridge.memberIds.map((id) => userModel.findById(id).then((user) => { return { name: user.name, email: user.email } }))
+    try {
+        const foundFridge = await fridgeModel.findById(id);
+        const memberIds = foundFridge.memberIds;
 
-    return members.toJSON();
+        //Find members based on ID
+        const members = await userModel.find({ _id: { $in: memberIds } });
+
+        //Only return ID and name
+        return members.map(member => ({ id: member.id, name: member.name }));
+    } catch (error) {
+        throw createServiceError(500, 'retrievalFailed', 'Failed to return fridge members from the database.');
+    }
 
 }
 
@@ -165,27 +162,29 @@ const inviteFridgeMember = async (id, dtoIn, authenticatedUser) => {
         throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
     }
 
-    const foundFridge = await getFridgeData(id, authenticatedUser);
-    //Only owner can invite
-    if (foundFridge.ownerId != authenticatedUser.id) {
-        throw createServiceError(403, 'forbidden', 'You are not authorized to invite members to this fridge.');
-    }
-
-    const invitedMember = await userModel.findOne({ name: dtoIn.name })
-
-    if (!invitedMember) {
-        throw createServiceError(400, 'userNotFound', `User with the name '${dtoIn.name}' does not exist.`);
-    }
-
-    if (foundFridge.memberIds.findIndex(invitedMember._id) != -1) {
-        throw createServiceError(400, 'userIsMember', `User is already a member of this fridge`);
-    }
-
     try {
-        foundFridge.memberIds.push(invitedMember._id);
-        const savedFridge = await foundFridge.save();
+        const foundFridge = await fridgeModel.findById(id);
+        //Only owner can invite
+        if (foundFridge.ownerId != authenticatedUser.id) {
+            throw createServiceError(403, 'forbidden', 'You are not authorized to invite members to this fridge.');
+        }
 
-        return savedFridge.toJSON();
+        const invitedMember = await userModel.findOne({ name: dtoIn.name })
+
+        if (!invitedMember) {
+            throw createServiceError(400, 'userNotFound', `User with the name '${dtoIn.name}' does not exist.`);
+        }
+
+        if (foundFridge.memberIds.includes(invitedMember._id)) {
+            throw createServiceError(400, 'userIsMember', `User is already a member of this fridge`);
+        }
+
+        const updatedIds = [...foundFridge.memberIds, invitedMember._id.toString()];
+        foundFridge.memberIds = updatedIds;
+
+        foundFridge.save();
+
+        return foundFridge.toJSON();
     } catch (error) {
         throw createServiceError(500, 'storageFailed', 'Failed to update fridge record in the database.');
     }
@@ -200,22 +199,30 @@ const removeFridgeMember = async (id, memberId, authenticatedUser) => {
         throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
     }
 
-    const foundFridge = await getFridgeData(id, authenticatedUser);
-    //Only owner can invite
-    if (foundFridge.ownerId != authenticatedUser.id && memberId != authenticatedUser.id) {
-        throw createServiceError(403, 'forbidden', 'You are not authorized to remove other members from this fridge.');
-    }
-
-    //Is the user a member of the fridge?
-    const removeAtIndex = foundFridge.memberIds.findIndex(memberId);
-    if (removeAtIndex == -1) {
-        throw createServiceError(400, 'userIsNotAMember', `User is not a member of this fridge`);
-    }
     try {
-        foundFridge.memberIds.splice(removeAtIndex, 1);
-        const savedFridge = await foundFridge.save();
+        const foundFridge = await fridgeModel.findById(id);
 
-        return savedFridge.toJSON();
+        //Only owner can invite
+        if (foundFridge.ownerId != authenticatedUser.id && memberId != authenticatedUser.id) {
+            throw createServiceError(403, 'forbidden', 'You are not authorized to remove other members from this fridge.');
+        }
+
+        //The member doesn't exist
+        if (!foundFridge.memberIds.includes(memberId)) {
+            throw createServiceError(400, 'userIsNotMember', `The user is not a member of this fridge.`);
+        }
+
+        //Remove the member ID
+        const memberIds = foundFridge.memberIds;
+        const deletions = 1;
+        const index = memberIds.indexOf(memberId);
+        memberIds.splice(index, deletions);
+
+        foundFridge.memberIds = memberIds;
+
+        await foundFridge.save();
+
+        return foundFridge.toJSON();
     } catch (error) {
         throw createServiceError(500, 'storageFailed', 'Failed to update fridge record in the database.');
     }

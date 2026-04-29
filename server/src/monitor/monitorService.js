@@ -82,7 +82,7 @@ const updateMonitor = async (monitorId, dtoIn, authenticatedUser) => {
     }
 
     try {
-        let monitor = await monitorModel.findById(monitorId);
+        const monitor = await monitorModel.findById(monitorId);
 
         if (!monitor) {
             //create the monitor if this radio ID is new
