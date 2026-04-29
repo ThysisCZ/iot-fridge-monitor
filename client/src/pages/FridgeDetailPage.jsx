@@ -95,12 +95,12 @@ function FridgeDetailPage() {
   const [humidRange, setHumidRange] = useState("7d");
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  /* useEffect(() => {
     Promise.allSettled([
       getFridge(fridgeId),
       listRules(fridgeId),
       listMeasurements(fridgeId, rangeToParams("7d")),
-    ]).then(([fridgeRes, measRes, rulesRes, historyRes]) => {
+    ]).then(([fridgeRes, rulesRes ,measRes, historyRes]) => {
       if (fridgeRes.status === "fulfilled") setFridge(fridgeRes.value);
       if (measRes.status === "fulfilled") setMeasurement(measRes.value);
       if (
@@ -119,6 +119,53 @@ function FridgeDetailPage() {
       }
       setLoading(false);
     });
+  }, [fridgeId]); */
+
+  useEffect(() => {
+    let ignore = false;
+
+    const loadDetail = async () => {
+      setLoading(true);
+
+      const [fridgeRes, rulesRes, historyRes] = await Promise.allSettled([
+        getFridge(fridgeId),
+        listRules(fridgeId),
+        listMeasurements(fridgeId, rangeToParams("7d")),
+      ]);
+
+      if (ignore) return;
+
+      if (fridgeRes.status === "fulfilled") {
+        setFridge(fridgeRes.value);
+      }
+
+      if (
+        rulesRes.status === "fulfilled" &&
+        Array.isArray(rulesRes.value?.itemList)
+      ) {
+        setRules(rulesRes.value.itemList);
+      }
+
+      if (
+        historyRes.status === "fulfilled" &&
+        Array.isArray(historyRes.value?.itemList)
+      ) {
+        const items = historyRes.value.itemList;
+
+        setMeasurement(items[items.length - 1] ?? null);
+
+        setTempHistory(toChartData(items, "temperature", "7d"));
+        setHumidHistory(toChartData(items, "humidity", "7d"));
+      }
+
+      setLoading(false);
+    };
+
+    loadDetail();
+
+    return () => {
+      ignore = true;
+    };
   }, [fridgeId]);
 
   const reloadHistory = async (range) => {

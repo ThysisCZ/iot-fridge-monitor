@@ -33,7 +33,7 @@ function LandingPage() {
             </p>
 
             <div className="flex justify-center md:justify-start">
-                <Button asChild size="lg">
+                <Button asChild size="lg" className="mt-2 rounded-full bg-blue-600 px-8 py-2.5 text-sm font-medium text-white hover:bg-blue-700">
                 <Link to="/auth">Login / Register</Link>
                 </Button>
             </div>
