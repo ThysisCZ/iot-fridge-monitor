@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { getUserProfile, loginUser, registerUser } from "@/api/authApi";
+import { getUserProfile, loginUser, registerUser, logoutUser } from "@/api/authApi";
 
 const AuthContext = createContext(null);
 
@@ -33,9 +33,15 @@ export function AuthProvider({ children }) {
     return result;
   };
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    setUser(null);
+  const logout = async () => {
+    try {
+      await logoutUser();
+    } catch (e) {
+      console.error("Logout failed on backend", e);
+    } finally {
+      localStorage.removeItem("token");
+      setUser(null);
+    }
   };
 
   useEffect(() => {
