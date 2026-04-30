@@ -3,7 +3,13 @@ const monitorService = require('./monitorService');
 
 const listMonitorsController = async (req, res) => {
     try {
-        const dtoOut = await monitorService.listMonitors(req.params.gatewayId, req.user);
+        /* const dtoOut = await monitorService.listMonitors(req.params.gatewayId, req.user); */
+        const dtoOut = await monitorService.listMonitors(
+            { gatewayId: req.params.gatewayId },
+            req.user
+        );
+
+
         return res.status(200).send(dtoOut);
     } catch (error) {
         return res.status(error.status || 500).send({
