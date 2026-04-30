@@ -5,6 +5,8 @@ import LandingPage from "./pages/LandingPage";
 import AuthPage from "./pages/AuthPage";
 import FridgesPage from "./pages/FridgesPage";
 import FridgeDetailPage from "./pages/FridgeDetailPage";
+import GatewaysPage from "./pages/GatewaysPage";
+import UserPage from "./pages/UserPage";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 function AppContent() {
@@ -25,11 +27,30 @@ function AppContent() {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/fridges/:id"
           element={
             <ProtectedRoute>
               <FridgeDetailPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/gateways"
+          element={
+            <ProtectedRoute>
+              <GatewaysPage />
+            </ProtectedRoute>
+          }
+        />
+        
+        <Route
+          path="/user"
+          element={
+            <ProtectedRoute>
+              <UserPage />
             </ProtectedRoute>
           }
         />
