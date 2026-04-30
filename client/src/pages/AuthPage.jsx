@@ -77,12 +77,23 @@ function AuthPage() {
         ...prev,
         [name]: value,
         }));
+        if (name === "password") {
+          setLoginErrors((prev) => ({
+           ...prev,
+           [name]: validateField(name, value),
+          }));
+        }
+    };
 
-        setLoginErrors((prev) => ({
+    const handleValidateLogin = (event) => {
+      const { name, value } = event.target;
+
+      setLoginErrors((prev) => ({
         ...prev,
         [name]: validateField(name, value),
-        }));
-    };
+      }));
+    }
+
 
     const handleRegisterChange = (event) => {
         const { name, value } = event.target;
@@ -92,11 +103,22 @@ function AuthPage() {
         [name]: value,
         }));
 
-        setRegisterErrors((prev) => ({
+        if (name === "password"){
+          setRegisterErrors((prev) => ({
+            ...prev,
+            [name]: validateField(name, value),
+          }));
+        }
+    };
+
+    const handleValidateRegister = (event) => {
+      const { name, value } = event.target;
+
+      setRegisterErrors((prev) => ({
         ...prev,
         [name]: validateField(name, value),
-        }));
-    };
+      }));
+    }
 
     const validateLogin = () => {
         const errors = {
@@ -205,6 +227,7 @@ function AuthPage() {
                     placeholder="john@example.com"
                     value={loginData.email}
                     onChange={handleLoginChange}
+                    onBlur={handleValidateLogin}
                   />
                   {loginErrors.email && (
                     <p className="text-sm text-red-500">
@@ -252,6 +275,7 @@ function AuthPage() {
                     placeholder="John"
                     value={registerData.name}
                     onChange={handleRegisterChange}
+                    onBlur={handleValidateRegister}
                   />
                   {registerErrors.name && (
                     <p className="text-sm text-red-500">
@@ -269,6 +293,7 @@ function AuthPage() {
                     placeholder="john@example.com"
                     value={registerData.email}
                     onChange={handleRegisterChange}
+                    onBlur={handleValidateRegister}
                   />
                   {registerErrors.email && (
                     <p className="text-sm text-red-500">
