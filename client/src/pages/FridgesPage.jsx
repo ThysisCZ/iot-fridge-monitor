@@ -53,7 +53,7 @@ function FridgesPage() {
   const [fridgeData, setFridgeData] = useState({});
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState({ name: "", description: "" });
+  const [form, setForm] = useState({ name: "", location: "", description: "" });
   const [formError, setFormError] = useState("");
   const [formLoading, setFormLoading] = useState(false);
 
@@ -99,11 +99,12 @@ function FridgesPage() {
     try {
       const created = await createFridge({
         name: form.name.trim(),
+        location: form.location.trim(),
         description: form.description.trim(),
       });
       setFridges((prev) => [...prev, created]);
       setShowModal(false);
-      setForm({ name: "", description: "" });
+      setForm({ name: "", location: "", description: "" });
     } catch (e) {
       setFormError(e.message);
     } finally {
@@ -262,6 +263,16 @@ function FridgesPage() {
                 value={form.name}
                 onChange={(e) =>
                   setForm((p) => ({ ...p, name: e.target.value }))
+                }
+                placeholder="..."
+              />
+            </div>
+            <div className="mb-3">
+              <label className="mb-1 block text-sm">Location:</label>
+              <Input
+                value={form.location}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, location: e.target.value }))
                 }
                 placeholder="..."
               />

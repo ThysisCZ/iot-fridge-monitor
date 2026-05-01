@@ -28,7 +28,7 @@ function LandingPage() {
 
             <p className="max-w-xl text-lg text-muted-foreground">
                 Track temperature, humidity and light values from IoT sensors.
-                Get a clear overview of fridge conditions and react quickly when
+                Get&nbsp;a&nbsp;clear overview of fridge conditions and react quickly when
                 something goes wrong.
             </p>
 
