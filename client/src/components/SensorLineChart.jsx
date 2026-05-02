@@ -80,7 +80,8 @@ export function SensorLineChart({
                 stroke="#EF4444"
                 strokeDasharray="4 3"
                 strokeWidth={1.5}
-                label={{ value: `${thresholdMax}${unit}`, position: 'insideTopLeft', fontSize: 10, fill: '#EF4444', fontWeight: 600 }}
+                ifOverflow="extendDomain"
+                label={{ value: `${thresholdMax}${unit}`, position: 'insideTopRight', fontSize: 10, fill: '#EF4444' }}
               />
             )}
             {thresholdMin != null && (
@@ -89,7 +90,8 @@ export function SensorLineChart({
                 stroke="#EF4444"
                 strokeDasharray="4 3"
                 strokeWidth={1.5}
-                label={{ value: `${thresholdMin}${unit}`, position: 'insideTopLeft', fontSize: 10, fill: '#EF4444', fontWeight: 600 }}
+                ifOverflow="extendDomain"
+                label={{ value: `${thresholdMin}${unit}`, position: 'insideBottomRight', fontSize: 10, fill: '#EF4444' }}
               />
             )}
             <Tooltip

@@ -145,8 +145,7 @@ const getFridgeMembers = async (id, authenticatedUser) => {
         //Find members based on ID
         const members = await userModel.find({ _id: { $in: memberIds } });
 
-        //Only return ID and name
-        return members.map(member => ({ id: member.id, name: member.name }));
+        return members.map(member => ({ id: member.id, name: member.name, email: member.email }));
     } catch (error) {
         throw createServiceError(500, 'retrievalFailed', 'Failed to return fridge members from the database.');
     }

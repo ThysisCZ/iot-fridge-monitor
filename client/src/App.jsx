@@ -5,6 +5,7 @@ import LandingPage from "./pages/LandingPage";
 import AuthPage from "./pages/AuthPage";
 import FridgesPage from "./pages/FridgesPage";
 import FridgeDetailPage from "./pages/FridgeDetailPage";
+import FridgeRulesPage from "./pages/FridgeRulesPage";
 import GatewaysPage from "./pages/GatewaysPage";
 import UserPage from "./pages/UserPage";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -33,6 +34,15 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <FridgeDetailPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/fridges/:id/rules"
+          element={
+            <ProtectedRoute>
+              <FridgeRulesPage />
             </ProtectedRoute>
           }
         />

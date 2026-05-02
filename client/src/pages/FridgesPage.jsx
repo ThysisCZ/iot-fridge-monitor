@@ -6,7 +6,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { GaugeChart } from "@/components/GaugeChart";
-import { listFridges, createFridge, listRules, updateFridge, deleteFridge } from "@/api/fridgeApi";
+import {
+  listFridges,
+  createFridge,
+  listRules,
+  updateFridge,
+  deleteFridge,
+} from "@/api/fridgeApi";
 
 const formatTime = (ts) => {
   const d = new Date(ts);
@@ -59,7 +65,11 @@ function FridgesPage() {
 
   const [openMenuId, setOpenMenuId] = useState(null);
   const [editFridge, setEditFridge] = useState(null);
-  const [editForm, setEditForm] = useState({ name: "", location: "", description: "" });
+  const [editForm, setEditForm] = useState({
+    name: "",
+    location: "",
+    description: "",
+  });
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [actionError, setActionError] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
@@ -121,7 +131,11 @@ function FridgesPage() {
 
   const openEditModal = (fridge) => {
     setEditFridge(fridge);
-    setEditForm({ name: fridge.name || "", location: fridge.location || "", description: fridge.description || "" });
+    setEditForm({
+      name: fridge.name || "",
+      location: fridge.location || "",
+      description: fridge.description || "",
+    });
     setOpenMenuId(null);
     setActionError("");
   };
@@ -139,7 +153,9 @@ function FridgesPage() {
         location: editForm.location.trim(),
         description: editForm.description.trim(),
       });
-      setFridges((prev) => prev.map((f) => (f.id === editFridge.id ? { ...f, ...updated } : f)));
+      setFridges((prev) =>
+        prev.map((f) => (f.id === editFridge.id ? { ...f, ...updated } : f)),
+      );
       setEditFridge(null);
     } catch (e) {
       setActionError(e.message);
@@ -227,7 +243,9 @@ function FridgesPage() {
                           className="rounded p-1 hover:bg-muted"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setOpenMenuId(openMenuId === fridge.id ? null : fridge.id);
+                            setOpenMenuId(
+                              openMenuId === fridge.id ? null : fridge.id,
+                            );
                           }}
                         >
                           <MoreVertical className="h-4 w-4 text-muted-foreground" />
@@ -236,13 +254,19 @@ function FridgesPage() {
                           <div className="absolute right-0 top-8 z-20 w-32 rounded-xl border bg-white p-1 shadow-lg">
                             <button
                               className="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-muted"
-                              onClick={(e) => { e.stopPropagation(); openEditModal(fridge); }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openEditModal(fridge);
+                              }}
                             >
                               Edit
                             </button>
                             <button
                               className="w-full rounded-lg px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
-                              onClick={(e) => { e.stopPropagation(); openDeleteDialog(fridge); }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openDeleteDialog(fridge);
+                              }}
                             >
                               Delete
                             </button>
@@ -403,7 +427,9 @@ function FridgesPage() {
               <label className="mb-1 block text-sm">Fridge name:</label>
               <Input
                 value={editForm.name}
-                onChange={(e) => setEditForm((p) => ({ ...p, name: e.target.value }))}
+                onChange={(e) =>
+                  setEditForm((p) => ({ ...p, name: e.target.value }))
+                }
                 placeholder="..."
               />
             </div>
@@ -411,7 +437,9 @@ function FridgesPage() {
               <label className="mb-1 block text-sm">Location:</label>
               <Input
                 value={editForm.location}
-                onChange={(e) => setEditForm((p) => ({ ...p, location: e.target.value }))}
+                onChange={(e) =>
+                  setEditForm((p) => ({ ...p, location: e.target.value }))
+                }
                 placeholder="..."
               />
             </div>
@@ -419,7 +447,9 @@ function FridgesPage() {
               <label className="mb-1 block text-sm">Description:</label>
               <Input
                 value={editForm.description}
-                onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }))}
+                onChange={(e) =>
+                  setEditForm((p) => ({ ...p, description: e.target.value }))
+                }
                 placeholder="..."
               />
             </div>
@@ -427,7 +457,11 @@ function FridgesPage() {
               <p className="mb-3 text-sm text-red-500">{actionError}</p>
             )}
             <div className="flex gap-3">
-              <Button variant="outline" className="flex-1" onClick={() => setEditFridge(null)}>
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setEditFridge(null)}
+              >
                 Cancel
               </Button>
               <button
@@ -454,13 +488,20 @@ function FridgesPage() {
             <h2 className="mb-3 text-xl font-bold">Delete Fridge</h2>
             <p className="mb-5 text-sm text-muted-foreground">
               Are you sure you want to delete fridge{" "}
-              <span className="font-medium text-foreground">{deleteTarget.name}</span>?
+              <span className="font-medium text-foreground">
+                {deleteTarget.name}
+              </span>
+              ?
             </p>
             {actionError && (
               <p className="mb-3 text-sm text-red-500">{actionError}</p>
             )}
             <div className="flex gap-3">
-              <Button variant="outline" className="flex-1" onClick={() => setDeleteTarget(null)}>
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setDeleteTarget(null)}
+              >
                 Cancel
               </Button>
               <button
