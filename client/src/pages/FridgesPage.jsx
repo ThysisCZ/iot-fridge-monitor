@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { GaugeChart } from "@/components/GaugeChart";
-import { listFridges, createFridge, listRules } from "@/api/fridgeApi";
+import { listFridges, createFridge, listRules, updateFridge, deleteFridge } from "@/api/fridgeApi";
 
 const formatTime = (ts) => {
   const d = new Date(ts);
@@ -56,6 +56,13 @@ function FridgesPage() {
   const [form, setForm] = useState({ name: "", location: "", description: "" });
   const [formError, setFormError] = useState("");
   const [formLoading, setFormLoading] = useState(false);
+
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const [editFridge, setEditFridge] = useState(null);
+  const [editForm, setEditForm] = useState({ name: "", location: "", description: "" });
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [actionError, setActionError] = useState("");
+  const [actionLoading, setActionLoading] = useState(false);
 
   const loadFridgeData = useCallback(async (list) => {
     const results = await Promise.allSettled(
@@ -109,6 +116,55 @@ function FridgesPage() {
       setFormError(e.message);
     } finally {
       setFormLoading(false);
+    }
+  };
+
+  const openEditModal = (fridge) => {
+    setEditFridge(fridge);
+    setEditForm({ name: fridge.name || "", location: fridge.location || "", description: fridge.description || "" });
+    setOpenMenuId(null);
+    setActionError("");
+  };
+
+  const handleUpdateFridge = async () => {
+    if (!editForm.name.trim()) {
+      setActionError("Fridge name is required.");
+      return;
+    }
+    setActionLoading(true);
+    setActionError("");
+    try {
+      const updated = await updateFridge(editFridge.id, {
+        name: editForm.name.trim(),
+        location: editForm.location.trim(),
+        description: editForm.description.trim(),
+      });
+      setFridges((prev) => prev.map((f) => (f.id === editFridge.id ? { ...f, ...updated } : f)));
+      setEditFridge(null);
+    } catch (e) {
+      setActionError(e.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const openDeleteDialog = (fridge) => {
+    setDeleteTarget(fridge);
+    setOpenMenuId(null);
+    setActionError("");
+  };
+
+  const handleDeleteFridge = async () => {
+    setActionLoading(true);
+    setActionError("");
+    try {
+      await deleteFridge(deleteTarget.id);
+      setFridges((prev) => prev.filter((f) => f.id !== deleteTarget.id));
+      setDeleteTarget(null);
+    } catch (e) {
+      setActionError(e.message);
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -166,12 +222,33 @@ function FridgesPage() {
                         <span className="font-semibold">{fridge.name}</span>
                         <RoleBadge isOwner={isOwner} />
                       </div>
-                      <button
-                        className="rounded p-1 hover:bg-muted"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <MoreVertical className="h-4 w-4 text-muted-foreground" />
-                      </button>
+                      <div className="relative">
+                        <button
+                          className="rounded p-1 hover:bg-muted"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenMenuId(openMenuId === fridge.id ? null : fridge.id);
+                          }}
+                        >
+                          <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                        </button>
+                        {openMenuId === fridge.id && (
+                          <div className="absolute right-0 top-8 z-20 w-32 rounded-xl border bg-white p-1 shadow-lg">
+                            <button
+                              className="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-muted"
+                              onClick={(e) => { e.stopPropagation(); openEditModal(fridge); }}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              className="w-full rounded-lg px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                              onClick={(e) => { e.stopPropagation(); openDeleteDialog(fridge); }}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <p className="mt-0.5 text-xs text-muted-foreground">
                       Last update:{" "}
@@ -307,6 +384,91 @@ function FridgesPage() {
                 className="flex-1 rounded-lg bg-blue-600 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
               >
                 {formLoading ? "Creating…" : "Continue"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {editFridge && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={() => setEditFridge(null)}
+        >
+          <div
+            className="mx-4 w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="mb-5 text-xl font-bold">Edit Fridge</h2>
+            <div className="mb-3">
+              <label className="mb-1 block text-sm">Fridge name:</label>
+              <Input
+                value={editForm.name}
+                onChange={(e) => setEditForm((p) => ({ ...p, name: e.target.value }))}
+                placeholder="..."
+              />
+            </div>
+            <div className="mb-3">
+              <label className="mb-1 block text-sm">Location:</label>
+              <Input
+                value={editForm.location}
+                onChange={(e) => setEditForm((p) => ({ ...p, location: e.target.value }))}
+                placeholder="..."
+              />
+            </div>
+            <div className="mb-4">
+              <label className="mb-1 block text-sm">Description:</label>
+              <Input
+                value={editForm.description}
+                onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }))}
+                placeholder="..."
+              />
+            </div>
+            {actionError && (
+              <p className="mb-3 text-sm text-red-500">{actionError}</p>
+            )}
+            <div className="flex gap-3">
+              <Button variant="outline" className="flex-1" onClick={() => setEditFridge(null)}>
+                Cancel
+              </Button>
+              <button
+                onClick={handleUpdateFridge}
+                disabled={actionLoading}
+                className="flex-1 rounded-lg bg-blue-600 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              >
+                {actionLoading ? "Saving…" : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteTarget && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={() => setDeleteTarget(null)}
+        >
+          <div
+            className="mx-4 w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="mb-3 text-xl font-bold">Delete Fridge</h2>
+            <p className="mb-5 text-sm text-muted-foreground">
+              Are you sure you want to delete fridge{" "}
+              <span className="font-medium text-foreground">{deleteTarget.name}</span>?
+            </p>
+            {actionError && (
+              <p className="mb-3 text-sm text-red-500">{actionError}</p>
+            )}
+            <div className="flex gap-3">
+              <Button variant="outline" className="flex-1" onClick={() => setDeleteTarget(null)}>
+                Cancel
+              </Button>
+              <button
+                onClick={handleDeleteFridge}
+                disabled={actionLoading}
+                className="flex-1 rounded-lg bg-red-600 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {actionLoading ? "Deleting…" : "Delete"}
               </button>
             </div>
           </div>

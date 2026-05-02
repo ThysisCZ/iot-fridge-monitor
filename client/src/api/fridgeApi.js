@@ -26,3 +26,16 @@ export const listMeasurements = (
     `/api/fridge/${fridgeId}/measurement/list${qs ? `?${qs}` : ""}`,
   );
 };
+
+export const updateFridge = async (fridgeId, data) => {
+  return await apiRequest(`/api/fridge/update/${fridgeId}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+};
+
+export const deleteFridge = async (fridgeId) => {
+  return await apiRequest(`/api/fridge/delete/${fridgeId}`, {
+    method: "DELETE",
+  });
+};
