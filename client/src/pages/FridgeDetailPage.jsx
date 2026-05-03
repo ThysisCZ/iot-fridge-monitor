@@ -18,7 +18,6 @@ import {
   removeMember,
   createRule,
   updateRule,
-  deleteRule,
 } from "@/api/fridgeApi";
 import {
   getMonitor,
@@ -191,11 +190,17 @@ function FridgeDetailPage() {
     let ignore = false;
     const loadDetail = async () => {
       setLoading(true);
-      const [fridgeRes, rulesRes, historyRes] = await Promise.allSettled([
-        getFridge(fridgeId),
-        listRules(fridgeId),
-        listMeasurements(fridgeId, rangeToParams("7d")),
-      ]);
+      const now = new Date();
+      const [fridgeRes, rulesRes, historyRes, latestRes] =
+        await Promise.allSettled([
+          getFridge(fridgeId),
+          listRules(fridgeId),
+          listMeasurements(fridgeId, rangeToParams("7d")),
+          listMeasurements(fridgeId, {
+            startDate: new Date(now - 24 * 60 * 60 * 1000).toISOString(),
+            endDate: now.toISOString(),
+          }),
+        ]);
       if (ignore) return;
       if (fridgeRes.status === "fulfilled") setFridge(fridgeRes.value);
       if (
@@ -208,9 +213,15 @@ function FridgeDetailPage() {
         Array.isArray(historyRes.value?.itemList)
       ) {
         const items = historyRes.value.itemList;
-        setMeasurement(items[items.length - 1] ?? null);
         setTempHistory(toChartData(items, "temperature", "7d"));
         setHumidHistory(toChartData(items, "humidity", "7d"));
+      }
+      if (
+        latestRes.status === "fulfilled" &&
+        Array.isArray(latestRes.value?.itemList)
+      ) {
+        const raw = latestRes.value.itemList;
+        setMeasurement(raw.length > 0 ? raw[raw.length - 1] : null);
       }
       setLoading(false);
     };
@@ -622,7 +633,7 @@ function FridgeDetailPage() {
             <p className="mb-2 text-sm font-medium">
               Last update:{" "}
               {measurement
-                ? formatTime(measurement.timestamp || measurement.createdAt)
+                ? formatTime(measurement.createdAt || measurement.timestamp)
                 : "no data"}
             </p>
             <div className="flex justify-around">
@@ -891,7 +902,9 @@ function FridgeDetailPage() {
                     <div>
                       <span className="text-sm">{m.name}</span>
                       {m.email && (
-                        <span className="ml-1.5 text-xs text-muted-foreground">{m.email}</span>
+                        <span className="ml-1.5 text-xs text-muted-foreground">
+                          {m.email}
+                        </span>
                       )}
                     </div>
                     {isOwner && m.id !== String(fridge?.ownerId) && (

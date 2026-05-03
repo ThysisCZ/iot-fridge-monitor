@@ -10,6 +10,7 @@ import {
   listFridges,
   createFridge,
   listRules,
+  listMeasurements,
   updateFridge,
   deleteFridge,
 } from "@/api/fridgeApi";
@@ -77,13 +78,27 @@ function FridgesPage() {
   const loadFridgeData = useCallback(async (list) => {
     const results = await Promise.allSettled(
       list.map(async (f) => {
-        const [meas, rules] = await Promise.allSettled([listRules(f.id)]);
+        const now = new Date();
+        const [measRes, rulesRes] = await Promise.allSettled([
+          listMeasurements(f.id, {
+            startDate: new Date(now - 24 * 60 * 60 * 1000).toISOString(),
+            endDate: now.toISOString(),
+          }),
+          listRules(f.id),
+        ]);
+        const items =
+          measRes.status === "fulfilled" &&
+          Array.isArray(measRes.value?.itemList)
+            ? measRes.value.itemList
+            : [];
+        const latestMeasurement = items.length > 0 ? items[items.length - 1] : null;
         return {
           id: f.id,
-          measurement: meas.status === "fulfilled" ? meas.value : null,
+          measurement: latestMeasurement,
           rules:
-            rules.status === "fulfilled" && Array.isArray(rules.value?.itemList)
-              ? rules.value.itemList
+            rulesRes.status === "fulfilled" &&
+            Array.isArray(rulesRes.value?.itemList)
+              ? rulesRes.value.itemList
               : [],
         };
       }),
@@ -278,7 +293,7 @@ function FridgesPage() {
                       Last update:{" "}
                       {measurement
                         ? formatTime(
-                            measurement.timestamp || measurement.createdAt,
+                            measurement.createdAt || measurement.timestamp,
                           )
                         : "no data"}
                     </p>
