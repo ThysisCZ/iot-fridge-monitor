@@ -9,11 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 function getArray(data) {
   if (Array.isArray(data)) return data;
-  if (Array.isArray(data?.items)) return data.items;
-  if (Array.isArray(data?.fridges)) return data.fridges;
-  if (Array.isArray(data?.gateways)) return data.gateways;
-  if (Array.isArray(data?.monitors)) return data.monitors;
-
+  if (Array.isArray(data?.itemList)) return data.itemList;
   return [];
 }
 
@@ -78,7 +74,7 @@ function UserPage() {
 
         const monitorResults = await Promise.allSettled(
           loadedGateways.map((gateway) =>
-            listGatewayMonitors(gateway.id),
+            listGatewayMonitors(gateway.id || gateway._id),
           ),
         );
 
@@ -112,8 +108,9 @@ function UserPage() {
 
     return {
       ownerCount: fridges.filter((fridge) => isUserOwner(fridge, userId)).length,
-      memberCount: fridges.filter((fridge) =>
-        isUserMember(fridge, userId),
+      memberCount: fridges.filter(
+        (fridge) =>
+          !isUserOwner(fridge, userId) && isUserMember(fridge, userId),
       ).length,
     };
   }, [fridges, user]);
@@ -133,7 +130,7 @@ function UserPage() {
       <div className="mb-8">
         <h1 className="text-2xl font-semibold">User profile</h1>
         <p className="text-sm text-muted-foreground">
-          Basic information about your account and connected devices.
+          Information about your account and connected devices.
         </p>
       </div>
 
