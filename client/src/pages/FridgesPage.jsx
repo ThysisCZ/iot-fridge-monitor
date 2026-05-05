@@ -210,20 +210,22 @@ function FridgesPage() {
   return (
     <main className="min-h-screen bg-background px-4 py-8">
       <div className="mx-auto max-w-2xl">
-        <h1 className="mb-6 text-center text-2xl font-bold">Fridges</h1>
-
-        {fridges.length === 0 ? (
-          <div className="flex flex-col items-center gap-4 py-16">
-            <p className="text-muted-foreground">No fridges</p>
-            <button
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="text-xl font-bold sm:text-2xl">Fridges</h1>
+          <Button
               onClick={() => setShowModal(true)}
-              className="rounded-full bg-blue-600 px-8 py-2.5 text-sm font-medium text-white hover:bg-blue-700"
+              className="shrink-0 rounded-full px-3 text-xs sm:px-8 sm:text-sm"
             >
               + Add Fridge
-            </button>
+          </Button>
+        </div>
+
+        {fridges.length === 0 ? (
+          <div className="mt-8 flex flex-col items-center gap-4 py-16">
+            <p className="text-muted-foreground">No fridges</p>
           </div>
         ) : (
-          <div className="flex flex-col gap-4">
+          <div className="mx-auto mt-6 flex w-full flex-col gap-4">
             {fridges.map((fridge) => {
               const { measurement, rules } = fridgeData[fridge.id] || {
                 measurement: null,
@@ -321,13 +323,6 @@ function FridgesPage() {
                 </Card>
               );
             })}
-
-            <button
-              onClick={() => setShowModal(true)}
-              className="mx-auto mt-2 rounded-full bg-blue-600 px-8 py-2.5 text-sm font-medium text-white hover:bg-blue-700"
-            >
-              + Add Fridge
-            </button>
           </div>
         )}
 
@@ -408,7 +403,7 @@ function FridgesPage() {
             )}
             <div className="flex gap-3">
               <Button
-                variant="outline"
+                variant="secondary"
                 className="flex-1"
                 onClick={() => {
                   setShowModal(false);
@@ -417,13 +412,13 @@ function FridgesPage() {
               >
                 Cancel
               </Button>
-              <button
+              <Button
                 onClick={handleCreate}
                 disabled={formLoading}
-                className="flex-1 rounded-lg bg-blue-600 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                className="flex-1"
               >
                 {formLoading ? "Creating…" : "Continue"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -473,19 +468,19 @@ function FridgesPage() {
             )}
             <div className="flex gap-3">
               <Button
-                variant="outline"
+                variant="secondary"
                 className="flex-1"
                 onClick={() => setEditFridge(null)}
               >
                 Cancel
               </Button>
-              <button
+              <Button
                 onClick={handleUpdateFridge}
                 disabled={actionLoading}
-                className="flex-1 rounded-lg bg-blue-600 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                className="flex-1"
               >
                 {actionLoading ? "Saving…" : "Save"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -513,19 +508,20 @@ function FridgesPage() {
             )}
             <div className="flex gap-3">
               <Button
-                variant="outline"
+                variant="secondary"
                 className="flex-1"
                 onClick={() => setDeleteTarget(null)}
               >
                 Cancel
               </Button>
-              <button
+              <Button
+                variant="danger"
                 onClick={handleDeleteFridge}
                 disabled={actionLoading}
-                className="flex-1 rounded-lg bg-red-600 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                className="flex-1"
               >
                 {actionLoading ? "Deleting…" : "Delete"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

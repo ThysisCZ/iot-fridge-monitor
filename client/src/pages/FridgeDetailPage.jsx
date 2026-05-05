@@ -730,19 +730,19 @@ function FridgeDetailPage() {
             )}
             <div className="flex gap-3">
               <Button
-                variant="outline"
+                variant="secondary"
                 className="flex-1"
                 onClick={() => setEditModal(false)}
               >
                 Cancel
               </Button>
-              <button
+              <Button
                 onClick={handleUpdateFridge}
                 disabled={editLoading}
-                className="flex-1 rounded-lg bg-blue-600 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                className="flex-1"
               >
                 {editLoading ? "Saving…" : "Save"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -946,7 +946,7 @@ function FridgeDetailPage() {
               </div>
             )}
             <Button
-              variant="outline"
+              variant="secondary"
               className="w-full"
               onClick={() => setMembersModal(false)}
             >
@@ -977,19 +977,20 @@ function FridgeDetailPage() {
             )}
             <div className="flex gap-3">
               <Button
-                variant="outline"
+                variant="secondary"
                 className="flex-1"
                 onClick={() => setDeleteModal(false)}
               >
                 Cancel
               </Button>
-              <button
+              <Button
+                variant="danger"
                 onClick={handleDeleteFridge}
                 disabled={deleteLoading}
-                className="flex-1 rounded-lg bg-red-600 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                className="flex-1"
               >
                 {deleteLoading ? "Deleting…" : "Delete"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -1070,7 +1071,7 @@ function FridgeDetailPage() {
               <p className="text-sm text-muted-foreground">Loading...</p>
             )}
             <Button
-              variant="outline"
+              variant="secondary"
               className="mt-5 w-full"
               onClick={() => setMonitorModal(false)}
             >
@@ -1131,13 +1132,13 @@ function FridgeDetailPage() {
                                   {mon.status}
                                 </span>
                               </div>
-                              <button
+                              <Button
                                 onClick={() => handlePairMonitor(monId)}
                                 disabled={pairingId === monId}
                                 className="rounded-lg bg-blue-600 px-2 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
                               >
                                 {pairingId === monId ? "Pairing…" : "Pair"}
-                              </button>
+                              </Button>
                             </div>
                           );
                         })}
@@ -1151,7 +1152,7 @@ function FridgeDetailPage() {
               <p className="mb-3 text-sm text-red-500">{pairError}</p>
             )}
             <Button
-              variant="outline"
+              variant="secondary"
               className="w-full"
               onClick={() => setPairModal(false)}
             >

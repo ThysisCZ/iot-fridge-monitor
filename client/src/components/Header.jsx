@@ -3,6 +3,7 @@ import { NavLink, useNavigate } from "react-router";
 import { Menu, X, UserCircle } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
+import UserAvatar from "./UserAvatar";
 
 import {
   DropdownMenu,
@@ -64,7 +65,7 @@ function Header() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-gray-100">
-              <UserCircle size={24} />
+              <UserAvatar name={user.name} size="sm" />
               <span className="hidden text-sm font-medium md:block">
                 {user.name}
               </span>

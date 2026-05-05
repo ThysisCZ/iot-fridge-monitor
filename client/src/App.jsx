@@ -9,6 +9,8 @@ import FridgeRulesPage from "./pages/FridgeRulesPage";
 import GatewaysPage from "./pages/GatewaysPage";
 import UserPage from "./pages/UserPage";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import ScrollToTop from "./components/ScrollToTop";
+
 
 function AppContent() {
   const { user } = useAuth();
@@ -16,6 +18,8 @@ function AppContent() {
   return (
     <>
       {user && <Header />}
+      <ScrollToTop />
+
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/auth" element={<AuthPage />} />
