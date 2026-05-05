@@ -78,7 +78,7 @@ function UserPage() {
 
         const monitorResults = await Promise.allSettled(
           loadedGateways.map((gateway) =>
-            listGatewayMonitors(gateway._id || gateway.id),
+            listGatewayMonitors(gateway.id),
           ),
         );
 
@@ -101,7 +101,7 @@ function UserPage() {
   }, []);
 
   const fridgeStats = useMemo(() => {
-    const userId = user?._id || user?.id;
+    const userId = user?.id;
 
     if (!userId) {
       return {
