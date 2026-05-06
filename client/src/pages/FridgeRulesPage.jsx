@@ -123,7 +123,7 @@ function FridgeRulesPage() {
       setRules((prev) =>
         prev.map((r) => (r.id === toDeactivate.id ? deactivated : r)),
       );
-    } catch {}
+    } catch { }
     performSubmit();
   };
 
@@ -170,7 +170,7 @@ function FridgeRulesPage() {
       await deleteRule(deleteTarget.id);
       setRules((prev) => prev.filter((r) => r.id !== deleteTarget.id));
       setDeleteTarget(null);
-    } catch {}
+    } catch { }
     setDeleteLoading(false);
   };
 
@@ -185,16 +185,26 @@ function FridgeRulesPage() {
   return (
     <main className="min-h-screen bg-background px-4 py-8">
       <div className="mx-auto max-w-2xl">
-        <div className="mb-6 flex items-center gap-3">
-          <button
-            onClick={() => navigate(`/fridges/${fridgeId}`)}
-            className="rounded p-1 hover:bg-muted"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-          <h1 className="text-xl font-bold">
-            Rules{fridge ? ` — ${fridge.name}` : ""}
-          </h1>
+        <div className="mb-6 flex items-center justify-between gap-3">
+          <div className="flex gap-3">
+            <button
+              onClick={() => navigate(`/fridges/${fridgeId}`)}
+              className="rounded p-1 hover:bg-muted"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <h1 className="text-xl font-bold">
+              Rules{fridge ? ` — ${fridge.name}` : ""}
+            </h1>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={openCreate}
+              className="rounded-full bg-blue-600 px-8 py-2.5 text-sm font-medium text-white hover:bg-blue-700"
+            >
+              + Add Rule
+            </button>
+          </div>
         </div>
 
         {rules.length === 0 ? (
@@ -211,11 +221,10 @@ function FridgeRulesPage() {
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{rule.name}</span>
                         <span
-                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                            rule.isActive
-                              ? "bg-green-100 text-green-700"
-                              : "bg-gray-100 text-gray-500"
-                          }`}
+                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${rule.isActive
+                            ? "bg-green-100 text-green-700"
+                            : "bg-gray-100 text-gray-500"
+                            }`}
                         >
                           {rule.isActive ? "Active" : "Inactive"}
                         </span>
@@ -266,15 +275,6 @@ function FridgeRulesPage() {
             ))}
           </div>
         )}
-
-        <div className="mt-6 flex justify-center">
-          <button
-            onClick={openCreate}
-            className="rounded-full bg-blue-600 px-8 py-2.5 text-sm font-medium text-white hover:bg-blue-700"
-          >
-            + Add Rule
-          </button>
-        </div>
       </div>
 
       {/* Create / Edit Modal */}
@@ -373,23 +373,26 @@ function FridgeRulesPage() {
             )}
             <div className="flex gap-3">
               <Button
-                variant="outline"
+                variant="secondary"
                 className="flex-1"
-                onClick={() => setModal(null)}
+                onClick={() => {
+                  setModal(null);
+                  setFormError("");
+                }}
               >
                 Cancel
               </Button>
-              <button
+              <Button
                 onClick={handleSubmit}
                 disabled={formLoading}
-                className="flex-1 rounded-lg bg-blue-600 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                className="flex-1"
               >
                 {formLoading
                   ? "Saving…"
                   : modal.mode === "create"
                     ? "Create"
                     : "Save"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -458,18 +461,18 @@ function FridgeRulesPage() {
             </p>
             <div className="flex gap-3">
               <Button
-                variant="outline"
+                variant="secondary"
                 className="flex-1"
                 onClick={() => setConflictRule(null)}
               >
                 Cancel
               </Button>
-              <button
+              <Button
                 onClick={handleConfirmConflict}
-                className="flex-1 rounded-lg bg-blue-600 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                className="flex-1"
               >
                 Yes, replace
-              </button>
+              </Button>
             </div>
           </div>
         </div>

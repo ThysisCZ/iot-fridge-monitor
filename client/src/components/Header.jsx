@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router";
-import { Menu, X, UserCircle } from "lucide-react";
+import { Menu, X, } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { Button } from "@/components/ui/button";
 import UserAvatar from "./UserAvatar";
 
 import {
@@ -25,8 +24,7 @@ function Header() {
   };
 
   const navLinkClass = ({ isActive }) =>
-    `text-sm font-medium transition hover:text-blue-600 ${
-      isActive ? "text-blue-600" : "text-gray-700"
+    `text-sm font-medium transition hover:text-blue-600 ${isActive ? "text-blue-600" : "text-gray-700"
     }`;
 
   return (
@@ -64,7 +62,7 @@ function Header() {
         {/* User dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-gray-100">
+            <button className="flex items-center gap-2 rounded-md px-2 py-1 ml-12 hover:bg-gray-100">
               <UserAvatar name={user.name} size="sm" />
               <span className="hidden text-sm font-medium md:block">
                 {user.name}

@@ -26,6 +26,18 @@ import {
 } from "@/api/monitorApi";
 import { listGateways, listGatewayMonitors } from "@/api/gatewayApi";
 
+const SENSOR_TYPES = ["temperature", "humidity", "illuminance"];
+const UNITS = { temperature: "°C", humidity: "%", illuminance: "lux" };
+
+const emptyForm = () => ({
+  name: "",
+  sensorType: "temperature",
+  min: "",
+  max: "",
+  duration: "0",
+  isActive: true,
+});
+
 const formatTime = (ts) => {
   const d = new Date(ts);
   return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
@@ -90,36 +102,6 @@ const toChartData = (itemList, sensorType, range) =>
     value: m[sensorType] != null ? Number(m[sensorType]) : null,
   }));
 
-const THRESHOLD_UNITS = {
-  temperature: "°C",
-  humidity: "%",
-  illuminance: "lux",
-};
-const THRESHOLD_LABELS = {
-  temperature: "Temperature",
-  humidity: "Humidity",
-  illuminance: "Illuminance",
-};
-
-const buildThresholdForm = (sensorType, rule) =>
-  rule
-    ? {
-        ruleId: rule.id,
-        name: rule.name,
-        min: String(rule.minThreshold),
-        max: String(rule.maxThreshold),
-        duration: String(rule.durationThreshold),
-        isActive: rule.isActive,
-      }
-    : {
-        ruleId: null,
-        name: THRESHOLD_LABELS[sensorType] ?? sensorType,
-        min: "",
-        max: "",
-        duration: "0",
-        isActive: true,
-      };
-
 function RoleBadge({ isOwner }) {
   return (
     <span
@@ -157,14 +139,17 @@ function FridgeDetailPage() {
   const [editError, setEditError] = useState("");
 
   const [thresholdModal, setThresholdModal] = useState(false);
-  const [thresholdTab, setThresholdTab] = useState("temperature");
   const [thresholdForms, setThresholdForms] = useState({
-    temperature: null,
-    humidity: null,
-    illuminance: null,
+    name: "",
+    sensorType: "temperature",
+    min: "",
+    max: "",
+    duration: "0",
+    isActive: true,
   });
   const [thresholdLoading, setThresholdLoading] = useState({});
   const [thresholdError, setThresholdError] = useState("");
+  const [conflictRule, setConflictRule] = useState(null);
 
   const [membersModal, setMembersModal] = useState(false);
   const [membersList, setMembersList] = useState([]);
@@ -247,7 +232,7 @@ function FridgeDetailPage() {
       const items = result?.itemList ?? [];
       setTempHistory(toChartData(items, "temperature", range));
       setHumidHistory(toChartData(items, "humidity", range));
-    } catch {}
+    } catch { }
   };
 
   const handleTempRangeChange = (range) => {
@@ -298,85 +283,89 @@ function FridgeDetailPage() {
 
   // --- Thresholds ---
   const openThresholdModal = () => {
-    setThresholdForms({
-      temperature: buildThresholdForm(
-        "temperature",
-        rules.find((r) => r.sensorType === "temperature"),
-      ),
-      humidity: buildThresholdForm(
-        "humidity",
-        rules.find((r) => r.sensorType === "humidity"),
-      ),
-      illuminance: buildThresholdForm(
-        "illuminance",
-        rules.find((r) => r.sensorType === "illuminance"),
-      ),
-    });
-    setThresholdTab("temperature");
+    setThresholdForms(emptyForm());
     setThresholdError("");
-    setThresholdLoading({});
+    setThresholdLoading(false);
     setOpenMenu(false);
     setThresholdModal(true);
   };
 
-  const updateThresholdField = (sensorType, field, value) => {
-    setThresholdForms((prev) => ({
-      ...prev,
-      [sensorType]: { ...prev[sensorType], [field]: value },
-    }));
-  };
-
-  const handleSaveThreshold = async (sensorType) => {
-    const form = thresholdForms[sensorType];
-    const min = parseFloat(form.min);
-    const max = parseFloat(form.max);
-    const dur = parseInt(form.duration, 10);
+  const validateForm = () => {
+    const min = parseFloat(thresholdForms.min);
+    const max = parseFloat(thresholdForms.max);
+    const dur = parseInt(thresholdForms.duration, 10);
+    if (!thresholdForms.name.trim()) {
+      setThresholdError("Name is required.");
+      return false;
+    }
     if (isNaN(min) || isNaN(max)) {
       setThresholdError("Min and max must be numbers.");
-      return;
+      return false;
     }
     if (min >= max) {
       setThresholdError("Min must be less than max.");
-      return;
+      return false;
     }
     if (isNaN(dur) || dur < 0) {
       setThresholdError("Duration must be a non-negative integer.");
-      return;
+      return false;
     }
-    setThresholdError("");
-    setThresholdLoading((p) => ({ ...p, [sensorType]: true }));
-    try {
-      let saved;
-      if (form.ruleId) {
-        saved = await updateRule(form.ruleId, {
-          minThreshold: min,
-          maxThreshold: max,
-          durationThreshold: dur,
-          isActive: form.isActive,
-        });
-      } else {
-        saved = await createRule(fridgeId, {
-          name: form.name.slice(0, 20),
-          sensorType,
-          minThreshold: min,
-          maxThreshold: max,
-          durationThreshold: dur,
-          isActive: form.isActive,
-        });
-      }
-      setRules((prev) =>
-        prev.some((r) => r.sensorType === sensorType)
-          ? prev.map((r) => (r.sensorType === sensorType ? saved : r))
-          : [...prev, saved],
+    return true;
+  };
+
+  const handleSaveThreshold = () => {
+    if (!validateForm()) return;
+
+    if (thresholdForms.isActive) {
+      const sensorType = thresholdForms.sensorType;
+      const existing = rules.find(
+        (r) =>
+          r.sensorType === sensorType && r.isActive
       );
-      setThresholdForms((p) => ({
-        ...p,
-        [sensorType]: buildThresholdForm(sensorType, saved),
-      }));
+      if (existing) {
+        setConflictRule(existing);
+        return;
+      }
+    }
+
+    performSubmit();
+  };
+
+  const handleConfirmConflict = async () => {
+    const toDeactivate = conflictRule;
+    setConflictRule(null);
+    try {
+      const deactivated = await updateRule(toDeactivate.id, {
+        isActive: false,
+      });
+      setRules((prev) =>
+        prev.map((r) => (r.id === toDeactivate.id ? deactivated : r)),
+      );
+    } catch { }
+    performSubmit();
+  };
+
+  const performSubmit = async () => {
+    const min = parseFloat(thresholdForms.min);
+    const max = parseFloat(thresholdForms.max);
+    const dur = parseInt(thresholdForms.duration, 10);
+    setThresholdLoading(true);
+    setThresholdError("");
+    try {
+      const saved = await createRule(fridgeId, {
+        name: thresholdForms.name.trim().slice(0, 20),
+        sensorType: thresholdForms.sensorType,
+        minThreshold: min,
+        maxThreshold: max,
+        durationThreshold: dur,
+        isActive: thresholdForms.isActive,
+      });
+      setRules((prev) => [...prev, saved]);
+      setThresholdModal(null);
     } catch (e) {
       setThresholdError(e.message);
     } finally {
-      setThresholdLoading((p) => ({ ...p, [sensorType]: false }));
+      setThresholdLoading(false);
     }
   };
 
@@ -421,7 +410,7 @@ function FridgeDetailPage() {
     try {
       await removeMember(fridgeId, memberId);
       setMembersList((prev) => prev.filter((m) => m.id !== memberId));
-    } catch {}
+    } catch { }
     setRemovingId(null);
   };
 
@@ -499,7 +488,7 @@ function FridgeDetailPage() {
       await removeMonitorFromFridge(fridge.monitorId, fridgeId);
       setFridge((f) => ({ ...f, monitorId: null }));
       setMonitor(null);
-    } catch {}
+    } catch { }
   };
 
   if (loading) {
@@ -582,7 +571,7 @@ function FridgeDetailPage() {
                   className="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-muted"
                   onClick={openThresholdModal}
                 >
-                  Thresholds
+                  Set Threshold
                 </button>
                 <button
                   className="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-muted"
@@ -748,131 +737,158 @@ function FridgeDetailPage() {
         </div>
       )}
 
-      {/* Thresholds Modal */}
-      {thresholdModal && thresholdForms.temperature && (
+      {/* Set Threshold Modal */}
+      {thresholdModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-          onClick={() => setThresholdModal(false)}
+          onClick={() => setThresholdModal(null)}
         >
           <div
             className="mx-4 w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="mb-4 text-xl font-bold">Thresholds</h2>
-            {/* Tabs */}
-            <div className="mb-4 flex rounded-lg border p-0.5">
-              {["temperature", "humidity", "illuminance"].map((type) => (
-                <button
-                  key={type}
-                  onClick={() => {
-                    setThresholdTab(type);
-                    setThresholdError("");
-                  }}
-                  className={`flex-1 rounded-md py-1 text-xs font-medium transition-colors ${
-                    thresholdTab === type
-                      ? "bg-blue-600 text-white"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {THRESHOLD_LABELS[type]}
-                </button>
-              ))}
+            <h2 className="mb-5 text-xl font-bold">
+              Set Threshold
+            </h2>
+            <div className="mb-3">
+              <label className="mb-1 block text-sm">Rule name:</label>
+              <Input
+                value={thresholdForms.name}
+                onChange={(e) =>
+                  setThresholdForms((p) => ({ ...p, name: e.target.value }))
+                }
+                placeholder="e.g. Fridge alert"
+              />
             </div>
-            {(() => {
-              const type = thresholdTab;
-              const form = thresholdForms[type];
-              const isLoadingType = thresholdLoading[type];
-              const unit = THRESHOLD_UNITS[type];
-              if (!form) return null;
-              return (
-                <div>
-                  <div className="mb-2 flex items-center justify-between">
-                    {form.ruleId ? (
-                      <span className="text-xs text-green-600">
-                        Rule active
-                      </span>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">
-                        No rule
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    <div className="flex-1">
-                      <label className="mb-0.5 block text-xs text-muted-foreground">
-                        Min ({unit})
-                      </label>
-                      <Input
-                        value={form.min}
-                        onChange={(e) =>
-                          updateThresholdField(type, "min", e.target.value)
-                        }
-                        placeholder="e.g. 2"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <label className="mb-0.5 block text-xs text-muted-foreground">
-                        Max ({unit})
-                      </label>
-                      <Input
-                        value={form.max}
-                        onChange={(e) =>
-                          updateThresholdField(type, "max", e.target.value)
-                        }
-                        placeholder="e.g. 6"
-                      />
-                    </div>
-                  </div>
-                  <div className="mt-2">
-                    <label className="mb-0.5 block text-xs text-muted-foreground">
-                      Duration (s)
-                    </label>
-                    <Input
-                      value={form.duration}
-                      onChange={(e) =>
-                        updateThresholdField(type, "duration", e.target.value)
-                      }
-                      placeholder="0"
-                    />
-                  </div>
-                  <div className="mt-2 flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="threshold-active"
-                      checked={form.isActive}
-                      onChange={(e) =>
-                        updateThresholdField(type, "isActive", e.target.checked)
-                      }
-                      className="h-4 w-4"
-                    />
-                    <label htmlFor="threshold-active" className="text-xs">
-                      Active
-                    </label>
-                  </div>
-                  <button
-                    onClick={() => handleSaveThreshold(type)}
-                    disabled={isLoadingType}
-                    className="mt-3 w-full rounded-lg bg-blue-600 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-                  >
-                    {isLoadingType
-                      ? "Saving…"
-                      : form.ruleId
-                        ? "Update"
-                        : "Create"}
-                  </button>
-                </div>
-              );
-            })()}
+            <div className="mb-3">
+              <label className="mb-1 block text-sm">Sensor type:</label>
+              <select
+                value={thresholdForms.sensorType}
+                onChange={(e) =>
+                  setThresholdForms((p) => ({ ...p, sensorType: e.target.value }))
+                }
+                className="w-full rounded-md border px-3 py-2 text-sm"
+              >
+                {SENSOR_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t.charAt(0).toUpperCase() + t.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="mb-3 flex gap-2">
+              <div className="flex-1">
+                <label className="mb-1 block text-xs text-muted-foreground">
+                  Min ({UNITS[thresholdForms.sensorType]})
+                </label>
+                <Input
+                  value={thresholdForms.min}
+                  onChange={(e) =>
+                    setThresholdForms((p) => ({ ...p, min: e.target.value }))
+                  }
+                  placeholder="e.g. 2"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="mb-1 block text-xs text-muted-foreground">
+                  Max ({UNITS[thresholdForms.sensorType]})
+                </label>
+                <Input
+                  value={thresholdForms.max}
+                  onChange={(e) =>
+                    setThresholdForms((p) => ({ ...p, max: e.target.value }))
+                  }
+                  placeholder="e.g. 6"
+                />
+              </div>
+            </div>
+            <div className="mb-3">
+              <label className="mb-1 block text-sm">Duration (s):</label>
+              <Input
+                value={thresholdForms.duration}
+                onChange={(e) =>
+                  setThresholdForms((p) => ({ ...p, duration: e.target.value }))
+                }
+                placeholder="0"
+              />
+            </div>
+            <div className="mb-4 flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="rule-active"
+                checked={thresholdForms.isActive}
+                onChange={(e) =>
+                  setThresholdForms((p) => ({ ...p, isActive: e.target.checked }))
+                }
+                className="h-4 w-4"
+              />
+              <label htmlFor="rule-active" className="text-sm">
+                Active
+              </label>
+            </div>
             {thresholdError && (
-              <p className="mt-3 text-sm text-red-500">{thresholdError}</p>
+              <p className="mb-3 text-sm text-red-500">{thresholdError}</p>
             )}
-            <Button
-              variant="outline"
-              className="mt-4 w-full"
-              onClick={() => setThresholdModal(false)}
-            >
-              Close
-            </Button>
+            <div className="flex gap-3">
+              <Button
+                variant="secondary"
+                className="flex-1"
+                onClick={() => setThresholdModal(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => handleSaveThreshold()}
+                disabled={thresholdLoading}
+                className="flex-1"
+              >
+                {thresholdLoading
+                  ? "Saving…"
+                  : "Set"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Conflict Confirmation Modal */}
+      {conflictRule && (
+        <div
+          className="fixed inset-0 flex items-center justify-center bg-black/50"
+          style={{ zIndex: 60 }}
+          onClick={() => setConflictRule(null)}
+        >
+          <div
+            className="mx-4 w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="mb-3 text-xl font-bold">Warning</h2>
+            <p className="mb-5 text-sm text-muted-foreground">
+              Rule{" "}
+              <span className="font-medium text-foreground">
+                {conflictRule.name}
+              </span>{" "}
+              is already active for{" "}
+              <span className="font-medium text-foreground capitalize">
+                {conflictRule.sensorType}
+              </span>
+              . Do you want to deactivate it and activate this one instead?
+            </p>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setConflictRule(null)}
+              >
+                Cancel
+              </Button>
+              <button
+                onClick={handleConfirmConflict}
+                className="flex-1 rounded-lg bg-blue-600 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              >
+                Yes, replace
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1016,11 +1032,10 @@ function FridgeDetailPage() {
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Status</span>
                   <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      monitor.status === "active"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-gray-100 text-gray-500"
-                    }`}
+                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${monitor.status === "active"
+                      ? "bg-green-100 text-green-700"
+                      : "bg-gray-100 text-gray-500"
+                      }`}
                   >
                     {monitor.status}
                   </span>
@@ -1123,11 +1138,10 @@ function FridgeDetailPage() {
                                   {monId}
                                 </span>
                                 <span
-                                  className={`ml-2 text-xs ${
-                                    mon.status === "active"
-                                      ? "text-green-600"
-                                      : "text-muted-foreground"
-                                  }`}
+                                  className={`ml-2 text-xs ${mon.status === "active"
+                                    ? "text-green-600"
+                                    : "text-muted-foreground"
+                                    }`}
                                 >
                                   {mon.status}
                                 </span>
