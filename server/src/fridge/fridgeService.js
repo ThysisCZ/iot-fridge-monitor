@@ -92,8 +92,12 @@ const updateFridge = async (id, dtoIn, authenticatedUser) => {
 
         foundFridge.name = dtoIn.name;
 
-        if (dtoIn.description) {
+        if (dtoIn.hasOwnProperty('description')) {
             foundFridge.description = dtoIn.description;
+        }
+
+        if (dtoIn.hasOwnProperty('location')) {
+            foundFridge.location = dtoIn.location;
         }
 
         await foundFridge.save();
