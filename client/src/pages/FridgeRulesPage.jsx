@@ -4,6 +4,7 @@ import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import {
   getFridge,
   listRules,
@@ -355,16 +356,14 @@ function FridgeRulesPage() {
               />
             </div>
             <div className="mb-4 flex items-center gap-2">
-              <input
-                type="checkbox"
+              <Switch
                 id="rule-active"
                 checked={form.isActive}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, isActive: e.target.checked }))
+                onCheckedChange={(checked) =>
+                  setForm((p) => ({ ...p, isActive: checked }))
                 }
-                className="h-4 w-4"
               />
-              <label htmlFor="rule-active" className="text-sm">
+              <label htmlFor="rule-active" className="text-semibold">
                 Active
               </label>
             </div>

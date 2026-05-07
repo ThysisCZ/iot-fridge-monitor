@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { GaugeChart } from "@/components/GaugeChart";
 import { SensorLineChart } from "@/components/SensorLineChart";
 import {
@@ -527,10 +528,10 @@ function FridgeDetailPage() {
     <main className="min-h-screen bg-background px-4 py-8">
       <div className="mx-auto max-w-2xl">
         {/* Header */}
-        <div className="mb-6 flex items-start justify-between">
+        <div className="mb-3 flex items-start justify-between">
           <div className="flex items-start gap-3">
             <button
-              onClick={() => navigate(-1)}
+              onClick={() => navigate("/fridges")}
               className="mt-0.5 rounded p-1 hover:bg-muted"
             >
               <ArrowLeft className="h-5 w-5" />
@@ -615,6 +616,13 @@ function FridgeDetailPage() {
             )}
           </div>
         </div>
+        {!monitor &&
+          <div className="flex justify-center mb-3">
+            <Button onClick={openPairModal}>
+                Pair Monitor
+            </Button>
+          </div>
+        }
 
         {/* Latest measurement */}
         <Card className="mb-4">
@@ -813,16 +821,14 @@ function FridgeDetailPage() {
               />
             </div>
             <div className="mb-4 flex items-center gap-2">
-              <input
-                type="checkbox"
+              <Switch
                 id="rule-active"
                 checked={thresholdForms.isActive}
-                onChange={(e) =>
-                  setThresholdForms((p) => ({ ...p, isActive: e.target.checked }))
+                onCheckedChange={(checked) =>
+                  setThresholdForms((p) => ({ ...p, isActive: checked }))
                 }
-                className="h-4 w-4"
               />
-              <label htmlFor="rule-active" className="text-sm">
+              <label htmlFor="rule-active" className="text-semibold">
                 Active
               </label>
             </div>
@@ -951,7 +957,7 @@ function FridgeDetailPage() {
                   <button
                     onClick={handleInvite}
                     disabled={inviteLoading}
-                    className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                    className="rounded-full bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
                   >
                     {inviteLoading ? "…" : "Invite"}
                   </button>

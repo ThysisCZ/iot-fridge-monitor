@@ -29,10 +29,10 @@ function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b bg-white">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+      <div className="container relative mx-auto flex h-16 items-center justify-between px-4">
         {/* Burger */}
         <button
-          className="md:hidden"
+          className="md:hidden px-[9px]"
           onClick={() => setMobileMenuOpen((prev) => !prev)}
         >
           {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
@@ -47,7 +47,7 @@ function Header() {
         </button>
 
         {/* Desktop nav */}
-        <nav className="hidden items-center gap-6 md:flex">
+        <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-6 md:flex">
           <NavLink to="/fridges" className={navLinkClass}>
             Fridges
           </NavLink>
@@ -62,7 +62,7 @@ function Header() {
         {/* User dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-2 rounded-md px-2 py-1 ml-12 hover:bg-gray-100">
+            <button className="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-gray-100">
               <UserAvatar name={user.name} size="sm" />
               <span className="hidden text-sm font-medium md:block">
                 {user.name}
