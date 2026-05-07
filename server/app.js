@@ -41,8 +41,8 @@ mongoose.connect(URI)
         process.exit(1);
     });
 
-//run every 10 minutes
-cron.schedule('*/10 * * * *', async () => {
+//run every minute
+cron.schedule('* * * * *', async () => {
     const timeout = new Date(Date.now() - (15 * 60 * 1000)); //15 minute threshold
 
     const session = await mongoose.startSession();

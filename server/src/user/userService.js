@@ -17,11 +17,11 @@ module.exports.registerUserService = (userDetails) => {
     return new Promise((resolve, reject) => {
 
         //check if email already exists
-        userModel.findOne({ email: userDetails.email })
+        userModel.findOne({ $or: [{ email: userDetails.email }, { name: userDetails.name }] })
             .then((existingUser) => {
 
                 if (existingUser) {
-                    reject({ message: "User already exists." });
+                    reject({ message: "Something went wrong." });
                     return;
                 }
 

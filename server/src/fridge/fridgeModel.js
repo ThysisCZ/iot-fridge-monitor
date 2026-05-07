@@ -28,7 +28,6 @@ const fridgeSchema = new mongoose.Schema(
         location: {
             type: String,
             required: false,
-            minLength: 1,
             maxLength: 20
         },
         description: {

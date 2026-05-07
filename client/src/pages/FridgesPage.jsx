@@ -88,7 +88,7 @@ function FridgesPage() {
         ]);
         const items =
           measRes.status === "fulfilled" &&
-          Array.isArray(measRes.value?.itemList)
+            Array.isArray(measRes.value?.itemList)
             ? measRes.value.itemList
             : [];
         const latestMeasurement = items.length > 0 ? items[items.length - 1] : null;
@@ -97,7 +97,7 @@ function FridgesPage() {
           measurement: latestMeasurement,
           rules:
             rulesRes.status === "fulfilled" &&
-            Array.isArray(rulesRes.value?.itemList)
+              Array.isArray(rulesRes.value?.itemList)
               ? rulesRes.value.itemList
               : [],
         };
@@ -213,10 +213,10 @@ function FridgesPage() {
         <div className="flex items-center justify-between gap-4">
           <h1 className="text-xl font-bold sm:text-2xl">Fridges</h1>
           <Button
-              onClick={() => setShowModal(true)}
-              className="shrink-0 rounded-full px-3 text-xs sm:px-8 sm:text-sm"
-            >
-              + Add Fridge
+            onClick={() => setShowModal(true)}
+            className="shrink-0 rounded-full px-3 text-xs sm:px-8 sm:text-sm"
+          >
+            + Add Fridge
           </Button>
         </div>
 
@@ -295,8 +295,8 @@ function FridgesPage() {
                       Last update:{" "}
                       {measurement
                         ? formatTime(
-                            measurement.createdAt || measurement.timestamp,
-                          )
+                          measurement.createdAt || measurement.timestamp,
+                        )
                         : "no data"}
                     </p>
                     <div className="mt-2 flex justify-around">
@@ -325,34 +325,6 @@ function FridgesPage() {
             })}
           </div>
         )}
-
-        <div className="mt-10">
-          <p className="mb-2 text-center text-xs text-muted-foreground">
-            MOCK DATA
-          </p>
-          <div className="flex justify-around rounded-xl border bg-card p-3">
-            <GaugeChart
-              value={3.1}
-              min={1}
-              max={5}
-              unit="°C"
-              label="Normal"
-              ticks={[2, 4]}
-              isAlert={false}
-              className="w-42"
-            />
-            <GaugeChart
-              value={4.8}
-              min={1}
-              max={5}
-              unit="°C"
-              label="Alert"
-              ticks={[2, 4]}
-              isAlert={true}
-              className="w-42"
-            />
-          </div>
-        </div>
       </div>
 
       {showModal && (
