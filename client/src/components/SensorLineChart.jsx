@@ -2,11 +2,42 @@ import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Refe
 import { ChevronDown } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardAction, CardContent } from '@/components/ui/card'
 
-const TIME_RANGES = [
-  { label: 'Last 24h', value: '24h' },
-  { label: 'Last 7 days', value: '7d' },
-  { label: 'Last 30 days', value: '30d' },
+const GRANULARITIES = [
+  { label: 'Hours', value: 'hours' },
+  { label: 'Days', value: 'days' },
 ]
+
+const CustomXAxisTick = ({ x, y, payload }) => {
+  const [mainLabel, subLabel] = String(payload.value).split('\n')
+
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <text
+        x={0}
+        y={0}
+        dy={8}
+        textAnchor="middle"
+        fill="#9CA3AF"
+        fontSize={10}
+      >
+        {mainLabel}
+      </text>
+
+      {subLabel && (
+        <text
+          x={0}
+          y={12}
+          dy={8}
+          textAnchor="middle"
+          fill="#9CA3AF"
+          fontSize={10}
+        >
+          {subLabel}
+        </text>
+      )}
+    </g>
+  )
+}
 
 // data: [{ label: string, value: number | null }]
 export function SensorLineChart({
@@ -15,8 +46,16 @@ export function SensorLineChart({
   data = [],
   thresholdMin,
   thresholdMax,
-  timeRange = '7d',
-  onTimeRangeChange,
+  granularity = 'hours',
+  onGranularityChange,
+  startDate,
+  endDate,
+  onStartDateChange,
+  onEndDateChange,
+  maxDate,
+  startMaxDate,
+  endMinDate,
+  endMaxDate,
   isAlert = false,
 }) {
   const lineColor = isAlert ? '#EF4444' : '#3B82F6'
@@ -38,33 +77,54 @@ export function SensorLineChart({
       <CardHeader>
         <CardTitle>{title}</CardTitle>
         <CardAction>
-          <div className="relative inline-flex items-center">
-            <select
-              value={timeRange}
-              onChange={(e) => onTimeRangeChange?.(e.target.value)}
-              className="appearance-none rounded-full border border-border bg-background py-1 pl-3 pr-7 text-xs font-medium cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring"
-            >
-              {TIME_RANGES.map((r) => (
-                <option key={r.value} value={r.value}>
-                  {r.label}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative inline-flex items-center">
+              <select
+                value={granularity}
+                onChange={(e) => onGranularityChange?.(e.target.value)}
+                className="appearance-none rounded-full border border-border bg-background py-1 pl-3 pr-7 text-xs font-medium cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring"
+              >
+                {GRANULARITIES.map((r) => (
+                  <option key={r.value} value={r.value}>
+                    {r.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+            </div>
+
+            <input
+              type="date"
+              value={startDate || ''}
+              max={startMaxDate || maxDate}
+              onChange={(e) => onStartDateChange?.(e.target.value)}
+              className="rounded-full border border-border bg-background py-1 px-3 text-xs font-medium cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+
+            <span className="text-xs text-muted-foreground">to</span>
+
+            <input
+              type="date"
+              value={endDate || ''}
+              min={endMinDate || startDate || ''}
+              max={endMaxDate || maxDate}
+              onChange={(e) => onEndDateChange?.(e.target.value)}
+              className="rounded-full border border-border bg-background py-1 px-3 text-xs font-medium cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring"
+            />
           </div>
         </CardAction>
       </CardHeader>
 
       <CardContent>
         <ResponsiveContainer width="100%" height={260}>
-          <LineChart data={data} margin={{ top: 16, right: 8, bottom: 0, left: -10 }}>
+          <LineChart data={data} margin={{ top: 16, right: 8, bottom: 14, left: -10 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
             <XAxis
               dataKey="label"
-              tick={{ fontSize: 10, fill: '#9CA3AF' }}
+              tick={<CustomXAxisTick />}
               axisLine={false}
               tickLine={false}
-              dy={6}
+              height={38}
             />
             <YAxis
               domain={yDomain}

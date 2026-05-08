@@ -256,7 +256,7 @@ module.exports.listMeasurements = (fridgeId, filters, authenticatedUser) => {
                     return reject({ message: 'Invalid end date.', code: 'invalidDtoIn' });
                 }
 
-                query.createdAt.$lte = end;
+                query.createdAt.$lt = end;
             }
         }
 
@@ -270,18 +270,29 @@ module.exports.listMeasurements = (fridgeId, filters, authenticatedUser) => {
             .then((measurements) => {
                 // apply granularity aggregation if specified
                 if (filters.granularity) {
+                    if (!filters.startDate || !filters.endDate) {
+                        return reject({
+                            message: 'Start date and end date are required when granularity is used.',
+                            code: 'invalidDtoIn'
+                        });
+                    }
+
                     const granularityMs = filters.granularity * 60 * 1000;
                     const startMs = new Date(filters.startDate).getTime();
                     const endMs = new Date(filters.endDate).getTime();
 
+                    if (startMs >= endMs) {
+                        return reject({
+                            message: 'Start date must be before end date.',
+                            code: 'invalidDtoIn'
+                        });
+                    }
+
                     const aggregated = [];
-                    let dataPoint = [];
-                    let dataPointStart = null;
 
                     // loop through every expected data point
-                    for (let currentSlot = startMs; currentSlot <= endMs; currentSlot += granularityMs) {
-
-                        const dataPoint = measurements.filter(m => {
+                    for (let currentSlot = startMs; currentSlot < endMs; currentSlot += granularityMs) {
+                        const dataPoint = measurements.filter((m) => {
                             const mTime = new Date(m.createdAt).getTime();
                             return mTime >= currentSlot && mTime < currentSlot + granularityMs;
                         });
@@ -297,11 +308,6 @@ module.exports.listMeasurements = (fridgeId, filters, authenticatedUser) => {
                                 illuminance: null
                             });
                         }
-                    }
-
-                    // handle last data point
-                    if (dataPoint.length > 0) {
-                        aggregated.push(aggregateDataPoint(dataPoint, dataPointStart));
                     }
 
                     return resolve({ itemList: aggregated });
