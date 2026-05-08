@@ -824,7 +824,7 @@ function FridgeDetailPage() {
             )}
           </div>
         </div>
-        {!monitor &&
+        {!fridge.monitorId &&
           <div className="flex justify-center mb-6">
             <Button onClick={openPairModal}>
                 Pair Monitor
