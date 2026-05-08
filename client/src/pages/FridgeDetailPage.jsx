@@ -1169,13 +1169,13 @@ function FridgeDetailPage() {
             {isOwner && (
               <div className="mb-4">
                 <label className="mb-1 block text-sm">
-                  Invite by username:
+                  Invite by Name:
                 </label>
                 <div className="flex gap-2">
                   <Input
                     value={inviteName}
                     onChange={(e) => setInviteName(e.target.value)}
-                    placeholder="Username..."
+                    placeholder="Name..."
                     onKeyDown={(e) => e.key === "Enter" && handleInvite()}
                   />
                   <button
