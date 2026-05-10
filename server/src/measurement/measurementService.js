@@ -33,6 +33,12 @@ module.exports.ingestMeasurement = (dtoIn, authenticatedUser) => {
             throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
         }
 
+        const parsedTimestamp = new Date(dtoIn.timestamp);
+
+        if (isNaN(parsedTimestamp.getTime())) {
+            throw createServiceError(400, 'invalidDtoIn', 'Timestamp is not valid.');
+        }
+
         if (dtoIn.temperature < -40 || dtoIn.temperature > 70 || dtoIn.humidity < 0 ||
             dtoIn.humidity > 100 || dtoIn.illuminance < 0 || dtoIn.illuminance > 10000) {
             return reject({
@@ -83,7 +89,7 @@ module.exports.ingestMeasurement = (dtoIn, authenticatedUser) => {
                     temperature: dtoIn.temperature,
                     humidity: dtoIn.humidity,
                     illuminance: dtoIn.illuminance,
-                    timestamp: dtoIn.timestamp
+                    timestamp: parsedTimestamp,
                 });
 
                 return newMeasurement.save();
@@ -237,7 +243,7 @@ module.exports.listMeasurements = (fridgeId, filters, authenticatedUser) => {
         const query = { fridgeId: fridgeId };
 
         if (filters.startDate || filters.endDate) {
-            query.createdAt = {};
+            query.timestamp = {};
 
             if (filters.startDate) {
                 const start = new Date(filters.startDate);
@@ -246,7 +252,7 @@ module.exports.listMeasurements = (fridgeId, filters, authenticatedUser) => {
                     return reject({ message: 'Invalid start date.', code: 'invalidDtoIn' });
                 }
 
-                query.createdAt.$gte = start;
+                query.timestamp.$gte = start;
             }
 
             if (filters.endDate) {
@@ -256,7 +262,7 @@ module.exports.listMeasurements = (fridgeId, filters, authenticatedUser) => {
                     return reject({ message: 'Invalid end date.', code: 'invalidDtoIn' });
                 }
 
-                query.createdAt.$lt = end;
+                query.timestamp.$lt = end;
             }
         }
 
@@ -266,7 +272,7 @@ module.exports.listMeasurements = (fridgeId, filters, authenticatedUser) => {
 
         measurementModel
             .find(query)
-            .sort({ createdAt: 1 })
+            .sort({ timestamp: 1 })
             .then((measurements) => {
                 // apply granularity aggregation if specified
                 if (filters.granularity) {
@@ -293,7 +299,7 @@ module.exports.listMeasurements = (fridgeId, filters, authenticatedUser) => {
                     // loop through every expected data point
                     for (let currentSlot = startMs; currentSlot < endMs; currentSlot += granularityMs) {
                         const dataPoint = measurements.filter((m) => {
-                            const mTime = new Date(m.createdAt).getTime();
+                            const mTime = new Date(m.timestamp).getTime();
                             return mTime >= currentSlot && mTime < currentSlot + granularityMs;
                         });
 

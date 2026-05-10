@@ -838,7 +838,7 @@ function FridgeDetailPage() {
             <p className="mb-2 text-sm font-medium">
               Last update:{" "}
               {measurement
-                ? formatTime(measurement.createdAt || measurement.timestamp)
+                ? formatTime(measurement.timestamp || measurement.createdAt)
                 : "no data"}
             </p>
             <div className="flex justify-around">
