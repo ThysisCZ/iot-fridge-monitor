@@ -113,6 +113,10 @@ const clampRange = (granularity, startDate, endDate) => {
 
   const length = daysBetween(safeStartDate, safeEndDate);
 
+  if (granularity === "minutes5") {
+    safeEndDate = safeStartDate;
+  }
+
   if (granularity === "hours") {
     if (length > 7) {
       safeEndDate = toDateInputValue(addDays(startOfLocalDay(safeStartDate), 6));
@@ -160,6 +164,13 @@ const getStartMaxDate = (granularity) => {
 const getEndDateLimits = (granularity, startDate) => {
   const today = toDateInputValue();
 
+  if (granularity === "minutes5") {
+    return {
+      endMinDate: startDate,
+      endMaxDate: startDate,
+    };
+  }
+
   if (granularity === "hours") {
     const maxByRange = toDateInputValue(addDays(startOfLocalDay(startDate), 6));
 
@@ -186,15 +197,33 @@ const rangeToParams = ({
   const start = startOfLocalDay(startDate);
   const end = addDays(startOfLocalDay(endDate), 1);
 
+  let backendGranularity = 1440;
+
+  if (granularity === "minutes5") {
+    backendGranularity = 5;
+  }
+
+  if (granularity === "hours") {
+    backendGranularity = 60;
+  }
+
+  if (granularity === "days") {
+    backendGranularity = 1440;
+  }
+
   return {
     startDate: start.toISOString(),
     endDate: end.toISOString(),
-    granularity: granularity === "hours" ? 60 : 1440,
+    granularity: backendGranularity,
   };
 };
 
 const formatLabel = (ts, granularity, startDate, endDate) => {
   const d = new Date(ts);
+
+  if (granularity === "minutes5") {
+    return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+  }
 
   if (granularity === "hours") {
     const isOneDay = startDate === endDate;
@@ -384,6 +413,14 @@ function FridgeDetailPage() {
 
     let nextStartDate = historyStartDate;
     let nextEndDate = historyEndDate;
+
+    if (value === "minutes5") {
+      if (nextStartDate > today) {
+        nextStartDate = today;
+      }
+
+      nextEndDate = nextStartDate;
+    }
 
     if (value === "hours") {
       const safeRange = clampRange("hours", nextStartDate, nextEndDate);

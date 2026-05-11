@@ -3,6 +3,7 @@ import { ChevronDown } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardAction, CardContent } from '@/components/ui/card'
 
 const GRANULARITIES = [
+  { label: '5 minutes', value: 'minutes5' },
   { label: 'Hours', value: 'hours' },
   { label: 'Days', value: 'days' },
 ]
@@ -109,7 +110,8 @@ export function SensorLineChart({
               min={endMinDate || startDate || ''}
               max={endMaxDate || maxDate}
               onChange={(e) => onEndDateChange?.(e.target.value)}
-              className="rounded-full border border-border bg-background py-1 px-3 text-xs font-medium cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring"
+              disabled={granularity === 'minutes5'}
+              className="rounded-full border border-border bg-background py-1 px-3 text-xs font-medium cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
             />
           </div>
         </CardAction>
