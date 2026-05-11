@@ -15,7 +15,6 @@ export const listGatewayMonitors = async (gatewayId, unassignedOnly = false) => 
   const params = new URLSearchParams();
   if (unassignedOnly) params.set("unassignedOnly", unassignedOnly);
   const qs = params.toString();
-  console.log(qs);
   return await apiRequest(`/api/gateway/${gatewayId}/monitor/list${qs ? `?${qs}` : ""}`);
 };
 
