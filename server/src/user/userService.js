@@ -21,7 +21,7 @@ module.exports.registerUserService = (userDetails) => {
             .then((existingUser) => {
 
                 if (existingUser) {
-                    reject({ message: "Something went wrong." });
+                    reject({ message: "User with this name or email already exists." });
                     return;
                 }
 

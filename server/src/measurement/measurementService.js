@@ -33,6 +33,12 @@ module.exports.ingestMeasurement = (dtoIn, authenticatedUser) => {
             throw createServiceError(400, 'invalidDtoIn', 'DtoIn is not valid.');
         }
 
+        const parsedTimestamp = new Date(dtoIn.timestamp);
+
+        if (isNaN(parsedTimestamp.getTime())) {
+            throw createServiceError(400, 'invalidDtoIn', 'Timestamp is not valid.');
+        }
+
         if (dtoIn.temperature < -40 || dtoIn.temperature > 70 || dtoIn.humidity < 0 ||
             dtoIn.humidity > 100 || dtoIn.illuminance < 0 || dtoIn.illuminance > 10000) {
             return reject({
@@ -83,7 +89,7 @@ module.exports.ingestMeasurement = (dtoIn, authenticatedUser) => {
                     temperature: dtoIn.temperature,
                     humidity: dtoIn.humidity,
                     illuminance: dtoIn.illuminance,
-                    timestamp: dtoIn.timestamp
+                    timestamp: parsedTimestamp,
                 });
 
                 return newMeasurement.save();

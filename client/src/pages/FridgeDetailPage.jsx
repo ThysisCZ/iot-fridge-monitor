@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { GaugeChart } from "@/components/GaugeChart";
 import { SensorLineChart } from "@/components/SensorLineChart";
 import {
@@ -65,40 +66,182 @@ const isAlert = (value, rules, sensorType) => {
   return value < rule.minThreshold || value > rule.maxThreshold;
 };
 
-const rangeToParams = (range) => {
-  const now = new Date();
-  switch (range) {
-    case "24h":
-      return {
-        startDate: new Date(now - 24 * 60 * 60 * 1000).toISOString(),
-        endDate: now.toISOString(),
-        granularity: 60,
-      };
-    case "30d":
-      return {
-        startDate: new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString(),
-        endDate: now.toISOString(),
-        granularity: 1440,
-      };
-    default:
-      return {
-        startDate: new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString(),
-        endDate: now.toISOString(),
-        granularity: 1440,
-      };
+const toDateInputValue = (date = new Date()) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const startOfLocalDay = (dateValue) => {
+  const [year, month, day] = dateValue.split("-").map(Number);
+  return new Date(year, month - 1, day, 0, 0, 0, 0);
+};
+
+const addDays = (date, days) => {
+  const copy = new Date(date);
+  copy.setDate(copy.getDate() + days);
+  return copy;
+};
+
+const daysBetween = (startDate, endDate) => {
+  const start = startOfLocalDay(startDate);
+  const end = startOfLocalDay(endDate);
+
+  return Math.round((end - start) / (24 * 60 * 60 * 1000)) + 1;
+};
+
+const clampRange = (granularity, startDate, endDate) => {
+  const today = toDateInputValue();
+
+  let safeStartDate = startDate > today ? today : startDate;
+  let safeEndDate = endDate > today ? today : endDate;
+
+  if (granularity === "days") {
+    const latestAllowedStartDate = toDateInputValue(
+      addDays(startOfLocalDay(today), -6),
+    );
+
+    if (safeStartDate > latestAllowedStartDate) {
+      safeStartDate = latestAllowedStartDate;
+    }
   }
+
+  if (safeStartDate > safeEndDate) {
+    safeEndDate = safeStartDate;
+  }
+
+  const length = daysBetween(safeStartDate, safeEndDate);
+
+  if (granularity === "minutes5") {
+    safeEndDate = safeStartDate;
+  }
+
+  if (granularity === "hours") {
+    if (length > 7) {
+      safeEndDate = toDateInputValue(addDays(startOfLocalDay(safeStartDate), 6));
+    }
+
+    if (safeEndDate > today) {
+      safeEndDate = today;
+    }
+  }
+
+  if (granularity === "days") {
+    const minEndDate = toDateInputValue(addDays(startOfLocalDay(safeStartDate), 6));
+    const maxEndDate = toDateInputValue(addDays(startOfLocalDay(safeStartDate), 30));
+
+    if (safeEndDate < minEndDate) {
+      safeEndDate = minEndDate;
+    }
+
+    if (safeEndDate > maxEndDate) {
+      safeEndDate = maxEndDate;
+    }
+
+    if (safeEndDate > today) {
+      safeEndDate = today;
+      safeStartDate = toDateInputValue(addDays(startOfLocalDay(today), -6));
+    }
+  }
+
+  return {
+    startDate: safeStartDate,
+    endDate: safeEndDate,
+  };
 };
 
-const formatLabel = (ts, range) => {
+const getStartMaxDate = (granularity) => {
+  const today = toDateInputValue();
+
+  if (granularity === "days") {
+    return toDateInputValue(addDays(startOfLocalDay(today), -6));
+  }
+
+  return today;
+};
+
+const getEndDateLimits = (granularity, startDate) => {
+  const today = toDateInputValue();
+
+  if (granularity === "minutes5") {
+    return {
+      endMinDate: startDate,
+      endMaxDate: startDate,
+    };
+  }
+
+  if (granularity === "hours") {
+    const maxByRange = toDateInputValue(addDays(startOfLocalDay(startDate), 6));
+
+    return {
+      endMinDate: startDate,
+      endMaxDate: maxByRange > today ? today : maxByRange,
+    };
+  }
+
+  const minByRange = toDateInputValue(addDays(startOfLocalDay(startDate), 6));
+  const maxByRange = toDateInputValue(addDays(startOfLocalDay(startDate), 30));
+
+  return {
+    endMinDate: minByRange,
+    endMaxDate: maxByRange > today ? today : maxByRange,
+  };
+};
+
+const rangeToParams = ({
+  granularity,
+  startDate,
+  endDate,
+}) => {
+  const start = startOfLocalDay(startDate);
+  const end = addDays(startOfLocalDay(endDate), 1);
+
+  let backendGranularity = 1440;
+
+  if (granularity === "minutes5") {
+    backendGranularity = 5;
+  }
+
+  if (granularity === "hours") {
+    backendGranularity = 60;
+  }
+
+  if (granularity === "days") {
+    backendGranularity = 1440;
+  }
+
+  return {
+    startDate: start.toISOString(),
+    endDate: end.toISOString(),
+    granularity: backendGranularity,
+  };
+};
+
+const formatLabel = (ts, granularity, startDate, endDate) => {
   const d = new Date(ts);
-  if (range === "24h") return `${d.getHours().toString().padStart(2, "0")}:00`;
-  if (range === "30d") return `${d.getMonth() + 1}/${d.getDate()}`;
-  return d.toLocaleDateString("en-US", { weekday: "short" });
+
+  if (granularity === "minutes5") {
+    return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+  }
+
+  if (granularity === "hours") {
+    const isOneDay = startDate === endDate;
+    const time = `${d.getHours().toString().padStart(2, "0")}:00`;
+
+    if (isOneDay) {
+      return time;
+    }
+
+    return `${time}\n${d.getDate()}.${d.getMonth() + 1}.`;
+  }
+
+  return `${d.getDate()}.${d.getMonth() + 1}.`;
 };
 
-const toChartData = (itemList, sensorType, range) =>
+const toChartData = (itemList, sensorType, granularity, startDate, endDate) =>
   itemList.map((m) => ({
-    label: formatLabel(m.timestamp, range),
+    label: formatLabel(m.timestamp || m.createdAt, granularity, startDate, endDate),
     value: m[sensorType] != null ? Number(m[sensorType]) : null,
   }));
 
@@ -123,8 +266,9 @@ function FridgeDetailPage() {
   const [monitor, setMonitor] = useState(null);
   const [tempHistory, setTempHistory] = useState([]);
   const [humidHistory, setHumidHistory] = useState([]);
-  const [tempRange, setTempRange] = useState("7d");
-  const [humidRange, setHumidRange] = useState("7d");
+  const [historyGranularity, setHistoryGranularity] = useState("hours");
+  const [historyStartDate, setHistoryStartDate] = useState(toDateInputValue());
+  const [historyEndDate, setHistoryEndDate] = useState(toDateInputValue());
   const [loading, setLoading] = useState(true);
 
   const [openMenu, setOpenMenu] = useState(false);
@@ -180,7 +324,14 @@ function FridgeDetailPage() {
         await Promise.allSettled([
           getFridge(fridgeId),
           listRules(fridgeId),
-          listMeasurements(fridgeId, rangeToParams("7d")),
+          listMeasurements(
+            fridgeId,
+            rangeToParams({
+              granularity: historyGranularity,
+              startDate: historyStartDate,
+              endDate: historyEndDate,
+            }),
+          ),
           listMeasurements(fridgeId, {
             startDate: new Date(now - 24 * 60 * 60 * 1000).toISOString(),
             endDate: now.toISOString(),
@@ -198,8 +349,8 @@ function FridgeDetailPage() {
         Array.isArray(historyRes.value?.itemList)
       ) {
         const items = historyRes.value.itemList;
-        setTempHistory(toChartData(items, "temperature", "7d"));
-        setHumidHistory(toChartData(items, "humidity", "7d"));
+        setTempHistory(toChartData(items, "temperature", historyGranularity, historyStartDate, historyEndDate));
+        setHumidHistory(toChartData(items, "humidity", historyGranularity, historyStartDate, historyEndDate));
       }
       if (
         latestRes.status === "fulfilled" &&
@@ -226,25 +377,115 @@ function FridgeDetailPage() {
     }
   }, [fridge?.monitorId]);
 
-  const reloadHistory = async (range) => {
+  const reloadHistory = async (override = {}) => {
     try {
-      const result = await listMeasurements(fridgeId, rangeToParams(range));
+      const nextState = {
+        granularity: historyGranularity,
+        startDate: historyStartDate,
+        endDate: historyEndDate,
+        ...override,
+      };
+
+      const safeRange = clampRange(
+        nextState.granularity,
+        nextState.startDate,
+        nextState.endDate,
+      );
+
+      const result = await listMeasurements(
+        fridgeId,
+        rangeToParams({
+          granularity: nextState.granularity,
+          startDate: safeRange.startDate,
+          endDate: safeRange.endDate,
+        }),
+      );
+
       const items = result?.itemList ?? [];
-      setTempHistory(toChartData(items, "temperature", range));
-      setHumidHistory(toChartData(items, "humidity", range));
+
+      setTempHistory(toChartData(items, "temperature", nextState.granularity, safeRange.startDate, safeRange.endDate));
+      setHumidHistory(toChartData(items, "humidity", nextState.granularity, safeRange.startDate, safeRange.endDate));
     } catch { }
   };
 
-  const handleTempRangeChange = (range) => {
-    setTempRange(range);
-    setHumidRange(range);
-    reloadHistory(range);
+  const handleGranularityChange = (value) => {
+    const today = toDateInputValue();
+
+    let nextStartDate = historyStartDate;
+    let nextEndDate = historyEndDate;
+
+    if (value === "minutes5") {
+      if (nextStartDate > today) {
+        nextStartDate = today;
+      }
+
+      nextEndDate = nextStartDate;
+    }
+
+    if (value === "hours") {
+      const safeRange = clampRange("hours", nextStartDate, nextEndDate);
+      nextStartDate = safeRange.startDate;
+      nextEndDate = safeRange.endDate;
+    }
+
+    if (value === "days") {
+      const length = daysBetween(nextStartDate, nextEndDate);
+
+      if (length < 7) {
+        nextEndDate = toDateInputValue(addDays(startOfLocalDay(nextStartDate), 6));
+      }
+
+      if (nextEndDate > today) {
+        nextEndDate = today;
+        nextStartDate = toDateInputValue(addDays(startOfLocalDay(today), -6));
+      }
+
+      const safeRange = clampRange("days", nextStartDate, nextEndDate);
+      nextStartDate = safeRange.startDate;
+      nextEndDate = safeRange.endDate;
+    }
+
+    setHistoryGranularity(value);
+    setHistoryStartDate(nextStartDate);
+    setHistoryEndDate(nextEndDate);
+
+    reloadHistory({
+      granularity: value,
+      startDate: nextStartDate,
+      endDate: nextEndDate,
+    });
   };
 
-  const handleHumidRangeChange = (range) => {
-    setHumidRange(range);
-    setTempRange(range);
-    reloadHistory(range);
+  const handleHistoryStartDateChange = (dateValue) => {
+    const safeRange = clampRange(
+      historyGranularity,
+      dateValue,
+      historyEndDate,
+    );
+
+    setHistoryStartDate(safeRange.startDate);
+    setHistoryEndDate(safeRange.endDate);
+
+    reloadHistory({
+      startDate: safeRange.startDate,
+      endDate: safeRange.endDate,
+    });
+  };
+
+  const handleHistoryEndDateChange = (dateValue) => {
+    const safeRange = clampRange(
+      historyGranularity,
+      historyStartDate,
+      dateValue,
+    );
+
+    setHistoryStartDate(safeRange.startDate);
+    setHistoryEndDate(safeRange.endDate);
+
+    reloadHistory({
+      startDate: safeRange.startDate,
+      endDate: safeRange.endDate,
+    });
   };
 
   // --- Edit ---
@@ -523,15 +764,20 @@ function FridgeDetailPage() {
   const humidRule = rules.find(
     (r) => r.sensorType === "humidity" && r.isActive,
   );
+  const startMaxDate = getStartMaxDate(historyGranularity);
+  const { endMinDate, endMaxDate } = getEndDateLimits(
+    historyGranularity,
+    historyStartDate,
+  );
 
   return (
     <main className="min-h-screen bg-background px-4 py-8">
       <div className="mx-auto max-w-2xl">
         {/* Header */}
-        <div className="mb-6 flex items-start justify-between">
+        <div className="mb-3 flex items-start justify-between">
           <div className="flex items-start gap-3">
             <button
-              onClick={() => navigate(-1)}
+              onClick={() => navigate("/fridges")}
               className="mt-0.5 rounded p-1 hover:bg-muted"
             >
               <ArrowLeft className="h-5 w-5" />
@@ -616,6 +862,13 @@ function FridgeDetailPage() {
             )}
           </div>
         </div>
+        {!fridge.monitorId &&
+          <div className="flex justify-center mb-6">
+            <Button onClick={openPairModal}>
+                Pair Monitor
+            </Button>
+          </div>
+        }
 
         {/* Latest measurement */}
         <Card className="mb-4">
@@ -623,7 +876,7 @@ function FridgeDetailPage() {
             <p className="mb-2 text-sm font-medium">
               Last update:{" "}
               {measurement
-                ? formatTime(measurement.createdAt || measurement.timestamp)
+                ? formatTime(measurement.timestamp || measurement.createdAt)
                 : "no data"}
             </p>
             <div className="flex justify-around">
@@ -657,8 +910,16 @@ function FridgeDetailPage() {
             data={tempHistory}
             thresholdMin={tempRule?.minThreshold}
             thresholdMax={tempRule?.maxThreshold}
-            timeRange={tempRange}
-            onTimeRangeChange={handleTempRangeChange}
+            granularity={historyGranularity}
+            onGranularityChange={handleGranularityChange}
+            startDate={historyStartDate}
+            endDate={historyEndDate}
+            onStartDateChange={handleHistoryStartDateChange}
+            onEndDateChange={handleHistoryEndDateChange}
+            maxDate={toDateInputValue()}
+            startMaxDate={startMaxDate}
+            endMinDate={endMinDate}
+            endMaxDate={endMaxDate}
             isAlert={isAlert(tempVal, rules, "temperature")}
           />
           <SensorLineChart
@@ -667,8 +928,16 @@ function FridgeDetailPage() {
             data={humidHistory}
             thresholdMin={humidRule?.minThreshold}
             thresholdMax={humidRule?.maxThreshold}
-            timeRange={humidRange}
-            onTimeRangeChange={handleHumidRangeChange}
+            granularity={historyGranularity}
+            onGranularityChange={handleGranularityChange}
+            startDate={historyStartDate}
+            endDate={historyEndDate}
+            onStartDateChange={handleHistoryStartDateChange}
+            onEndDateChange={handleHistoryEndDateChange}
+            maxDate={toDateInputValue()}
+            startMaxDate={startMaxDate}
+            endMinDate={endMinDate}
+            endMaxDate={endMaxDate}
             isAlert={isAlert(humidVal, rules, "humidity")}
           />
         </div>
@@ -814,16 +1083,14 @@ function FridgeDetailPage() {
               />
             </div>
             <div className="mb-4 flex items-center gap-2">
-              <input
-                type="checkbox"
+              <Switch
                 id="rule-active"
                 checked={thresholdForms.isActive}
-                onChange={(e) =>
-                  setThresholdForms((p) => ({ ...p, isActive: e.target.checked }))
+                onCheckedChange={(checked) =>
+                  setThresholdForms((p) => ({ ...p, isActive: checked }))
                 }
-                className="h-4 w-4"
               />
-              <label htmlFor="rule-active" className="text-sm">
+              <label htmlFor="rule-active" className="text-semibold">
                 Active
               </label>
             </div>
@@ -940,19 +1207,19 @@ function FridgeDetailPage() {
             {isOwner && (
               <div className="mb-4">
                 <label className="mb-1 block text-sm">
-                  Invite by username:
+                  Invite by Name:
                 </label>
                 <div className="flex gap-2">
                   <Input
                     value={inviteName}
                     onChange={(e) => setInviteName(e.target.value)}
-                    placeholder="Username..."
+                    placeholder="Name..."
                     onKeyDown={(e) => e.key === "Enter" && handleInvite()}
                   />
                   <button
                     onClick={handleInvite}
                     disabled={inviteLoading}
-                    className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                    className="rounded-full bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
                   >
                     {inviteLoading ? "…" : "Invite"}
                   </button>

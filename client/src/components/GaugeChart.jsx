@@ -32,15 +32,25 @@ export function GaugeChart({
     SW = 18;
 
   const valid = Number.isFinite(value);
+
+  const rawRatio = valid ? (value - min) / (max - min) : 0;
+
   const ratio = valid
-    ? Math.max(0, Math.min(1, (value - min) / (max - min)))
+    ? Math.max(0, Math.min(1, rawRatio))
     : 0;
+
+  const displayRatio =
+    valid && isAlert && value < min
+      ? 0.04
+      : ratio;
 
   const color = isAlert ? "#EF4444" : "#3B82F6";
 
   const trackPath = arcPath(CX, CY, R, START_DEG, SWEEP_DEG);
   const fillPath =
-    ratio > 0.001 ? arcPath(CX, CY, R, START_DEG, ratio * SWEEP_DEG) : null;
+    displayRatio > 0.001
+      ? arcPath(CX, CY, R, START_DEG, displayRatio * SWEEP_DEG)
+      : null;
 
   return (
     <div className={cn("flex flex-col items-center", className)}>
@@ -73,6 +83,7 @@ export function GaugeChart({
           const cosVal = Math.cos((deg * Math.PI) / 180);
           const anchor =
             cosVal < -0.25 ? "start" : cosVal > 0.25 ? "end" : "middle";
+
           return (
             <g key={tick}>
               <line

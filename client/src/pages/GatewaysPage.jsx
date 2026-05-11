@@ -11,6 +11,7 @@ import {
   deleteGateway,
 } from "@/api/gatewayApi";
 import { getMonitor } from "@/api/monitorApi";
+import {ButtonSkeleton, GatewaySkeleton} from "@/components/Skeleton"
 
 function GatewaysPage() {
   const [gateways, setGateways] = useState([]);
@@ -206,10 +207,14 @@ function GatewaysPage() {
     return (
       <main className="min-h-screen bg-background px-4 py-8">
         <div className="mx-auto max-w-2xl">
-          <h1 className="text-xl font-bold sm:text-2xl">Gateways</h1>
-          <p className="mt-6 text-center text-muted-foreground">
-            Loading gateways...
-          </p>
+          <div className="flex items-center justify-between gap-4">
+            <h1 className="mt-1 mb-6 text-xl font-bold sm:text-2xl">Gateways</h1>
+            {/* <p className="mt-6 text-center text-muted-foreground">
+              Loading gateways...
+            </p> */}
+            <ButtonSkeleton />
+          </div>
+          <GatewaySkeleton />
         </div>
       </main>
     );
