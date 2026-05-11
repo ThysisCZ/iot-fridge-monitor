@@ -11,8 +11,12 @@ export const registerGateway = async (data) => {
   });
 };
 
-export const listGatewayMonitors = async (gatewayId) => {
-  return await apiRequest(`/api/gateway/${gatewayId}/monitor/list`);
+export const listGatewayMonitors = async (gatewayId, unassignedOnly = false) => {
+  const params = new URLSearchParams();
+  if (unassignedOnly) params.set("unassignedOnly", unassignedOnly);
+  const qs = params.toString();
+  console.log(qs);
+  return await apiRequest(`/api/gateway/${gatewayId}/monitor/list${qs ? `?${qs}` : ""}`);
 };
 
 export const updateGateway = async (gatewayId, data) => {

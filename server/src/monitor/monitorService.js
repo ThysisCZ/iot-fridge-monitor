@@ -35,7 +35,7 @@ const listMonitors = async (dtoIn, authenticatedUser) => {
         const query = { gatewayId: dtoIn.gatewayId };
 
         //show only unassigned monitors
-        if (dtoIn.unassignedOnly === true) {
+        if (dtoIn.unassignedOnly === "true") {
             query.fridgeId = null;
         }
 

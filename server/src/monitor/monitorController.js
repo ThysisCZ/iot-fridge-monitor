@@ -5,7 +5,10 @@ const listMonitorsController = async (req, res) => {
     try {
         /* const dtoOut = await monitorService.listMonitors(req.params.gatewayId, req.user); */
         const dtoOut = await monitorService.listMonitors(
-            { gatewayId: req.params.gatewayId },
+            {
+                gatewayId: req.params.gatewayId,
+                unassignedOnly: req.query.unassignedOnly
+            },
             req.user
         );
 

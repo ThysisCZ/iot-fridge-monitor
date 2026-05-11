@@ -452,7 +452,8 @@ function FridgeDetailPage() {
       const withMonitors = await Promise.all(
         gatewayList.map(async (gw) => {
           try {
-            const mRes = await listGatewayMonitors(gw.id || gw._id);
+            const unassigned = true;
+            const mRes = await listGatewayMonitors(gw.id || gw._id, unassigned);
             return { ...gw, monitors: mRes.itemList || [] };
           } catch {
             return { ...gw, monitors: [] };
