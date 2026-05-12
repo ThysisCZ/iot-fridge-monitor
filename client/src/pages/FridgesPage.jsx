@@ -14,6 +14,7 @@ import {
   updateFridge,
   deleteFridge,
 } from "@/api/fridgeApi";
+import { FridgeSkeleton, ButtonSkeleton } from "@/components/Skeleton";
 
 const formatTime = (ts) => {
   const d = new Date(ts);
@@ -201,9 +202,18 @@ function FridgesPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
+      <main className="min-h-screen bg-background px-4 py-8">
+        <div className="mx-auto max-w-2xl">
+          <div className="mb-1 flex items-center justify-between gap-4">
+            <h1 className="mt-1 mb-6 text-xl font-bold sm:text-2xl">Fridges</h1>
+            <ButtonSkeleton />
+          </div>
+          <FridgeSkeleton />
+          <div className="mt-4">
+            <FridgeSkeleton />
+          </div>
+        </div>
+      </main>
     );
   }
 
@@ -255,41 +265,43 @@ function FridgesPage() {
                         <span className="font-semibold">{fridge.name}</span>
                         <RoleBadge isOwner={isOwner} />
                       </div>
-                      <div className="relative">
-                        <button
-                          className="rounded p-1 hover:bg-muted"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setOpenMenuId(
-                              openMenuId === fridge.id ? null : fridge.id,
-                            );
-                          }}
-                        >
-                          <MoreVertical className="h-4 w-4 text-muted-foreground" />
-                        </button>
-                        {openMenuId === fridge.id && (
-                          <div className="absolute right-0 top-8 z-20 w-32 rounded-xl border bg-white p-1 shadow-lg">
-                            <button
-                              className="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-muted"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openEditModal(fridge);
-                              }}
-                            >
-                              Edit
-                            </button>
-                            <button
-                              className="w-full rounded-lg px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openDeleteDialog(fridge);
-                              }}
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        )}
-                      </div>
+                      { isOwner &&
+                        <div className="relative">
+                          <button
+                            className="rounded p-1 hover:bg-muted"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenMenuId(
+                                openMenuId === fridge.id ? null : fridge.id,
+                              );
+                            }}
+                          >
+                            <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                          </button>
+                          {openMenuId === fridge.id && (
+                            <div className="absolute right-0 top-8 z-20 w-32 rounded-xl border bg-white p-1 shadow-lg">
+                              <button
+                                className="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-muted"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openEditModal(fridge);
+                                }}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                className="w-full rounded-lg px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openDeleteDialog(fridge);
+                                }}
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      }
                     </div>
                     <p className="mt-0.5 text-xs text-muted-foreground">
                       Last update:{" "}

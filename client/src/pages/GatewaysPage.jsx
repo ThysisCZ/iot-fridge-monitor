@@ -209,9 +209,6 @@ function GatewaysPage() {
         <div className="mx-auto max-w-2xl">
           <div className="flex items-center justify-between gap-4">
             <h1 className="mt-1 mb-6 text-xl font-bold sm:text-2xl">Gateways</h1>
-            {/* <p className="mt-6 text-center text-muted-foreground">
-              Loading gateways...
-            </p> */}
             <ButtonSkeleton />
           </div>
           <GatewaySkeleton />

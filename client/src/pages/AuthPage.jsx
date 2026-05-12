@@ -312,7 +312,7 @@ function AuthPage() {
                     </div>
                 )}
 
-                <Button type="submit" className="w-full mt-2 rounded-full bg-blue-600 px-8 py-2.5 text-sm font-medium text-white hover:bg-blue-700" disabled={isLoginSubmitting}>
+                <Button type="submit" variant={isLoginSubmitting ? "outline" : "default" } className="w-full" disabled={isLoginSubmitting}>
                     {isLoginSubmitting ? "Logging in..." : "Login"}
                 </Button>
               </form>
@@ -406,7 +406,7 @@ function AuthPage() {
                     </div>
                 )}
 
-                <Button type="submit" className="w-full mt-2 rounded-full bg-blue-600 px-8 py-2.5 text-sm font-medium text-white hover:bg-blue-700" disabled={isRegisterSubmitting}>
+                <Button type="submit" variant={isRegisterSubmitting ? "outline" : "default" } className="w-full" disabled={isRegisterSubmitting}>
                     {isRegisterSubmitting ? "Creating account..." : "Create account"}
                 </Button>
               </form>
