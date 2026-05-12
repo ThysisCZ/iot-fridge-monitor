@@ -1,5 +1,5 @@
 import { Link, useNavigate, Navigate } from "react-router";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 
 /* UI */
@@ -18,6 +18,8 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import { Eye, EyeClosed } from "lucide-react";
 
 
 
@@ -40,6 +42,11 @@ function AuthPage() {
     });
     const [loginErrors, setLoginErrors] = useState({});
     const [registerErrors, setRegisterErrors] = useState({});
+    const [isLoginPassword, setIsLoginPassword] = useState(true);
+    const [isRegisterPassword, setIsRegisterPassword] = useState(true);
+
+    const loginPasswordInputRef = useRef(null);
+    const registerPasswordInputRef = useRef(null);
 
     if (isAuthLoading) return null;
 
@@ -183,6 +190,23 @@ function AuthPage() {
         }
     };
 
+    function togglePasswordVisibility(e, inputRef, setPasswordVisible) {
+      e.preventDefault();
+
+      const input = inputRef.current;
+      const selectionStart = input?.selectionStart;
+      const selectionEnd = input?.selectionEnd;
+
+      setPasswordVisible((pass) => !pass);
+
+      requestAnimationFrame(() => {
+        if (input && selectionStart !== null && selectionEnd !== null) {
+          input.focus();
+          input.setSelectionRange(selectionStart, selectionEnd);
+        }
+      });
+    }
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
       <Card className="w-full max-w-md rounded-2xl shadow-sm">
@@ -238,14 +262,43 @@ function AuthPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="login-password">Password</Label>
-                  <Input
+                  <InputGroup>
+                    <InputGroupInput
+                      ref={loginPasswordInputRef}
+                      id="login-password"
+                      name="password"
+                      type={isLoginPassword ? "password" : "text"}
+                      placeholder="••••••••"
+                      value={loginData.password}
+                      onChange={handleLoginChange}
+                    />
+
+                    <InputGroupAddon align="inline-end">
+                      {isLoginPassword ? (
+                        <EyeClosed
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={(e) =>
+                            togglePasswordVisibility(e, loginPasswordInputRef, setIsLoginPassword)
+                          }
+                        />
+                      ) : (
+                        <Eye
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={(e) =>
+                            togglePasswordVisibility(e, loginPasswordInputRef, setIsLoginPassword)
+                          }
+                        />
+                      )}
+                    </InputGroupAddon>
+                  </InputGroup>
+                  {/* <Input
                     id="login-password"
                     name="password"
                     type="password"
                     placeholder="••••••••"
                     value={loginData.password}
                     onChange={handleLoginChange}
-                  />
+                  /> */}
                   {loginErrors.password && (
                     <p className="text-sm text-red-500">
                       {loginErrors.password}
@@ -304,14 +357,43 @@ function AuthPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="register-password">Password</Label>
-                  <Input
+                  <InputGroup>
+                    <InputGroupInput
+                      ref={registerPasswordInputRef}
+                      id="register-password"
+                      name="password"
+                      type={isRegisterPassword ? "password" : "text"}
+                      placeholder="••••••••"
+                      value={registerData.password}
+                      onChange={handleRegisterChange}
+                    />
+
+                    <InputGroupAddon align="inline-end">
+                      {isRegisterPassword ? (
+                        <EyeClosed
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={(e) =>
+                            togglePasswordVisibility(e, registerPasswordInputRef, setIsRegisterPassword)
+                          }
+                        />
+                      ) : (
+                        <Eye
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={(e) =>
+                            togglePasswordVisibility(e, registerPasswordInputRef, setIsRegisterPassword)
+                          }
+                        />
+                      )}
+                    </InputGroupAddon>
+                  </InputGroup>
+                  {/* <Input
                     id="register-password"
                     name="password"
                     type="password"
                     placeholder="••••••••"
                     value={registerData.password}
                     onChange={handleRegisterChange}
-                  />
+                  /> */}
                   {registerErrors.password && (
                     <p className="text-sm text-red-500">
                       {registerErrors.password}
