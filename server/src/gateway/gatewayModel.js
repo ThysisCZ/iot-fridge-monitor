@@ -28,7 +28,7 @@ const gatewaySchema = new mongoose.Schema(
         },
         lastSeen: {
             type: Date,
-            default: Date.now
+            required: false
         }
     },
     {

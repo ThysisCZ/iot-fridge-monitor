@@ -28,15 +28,14 @@ const registerGateway = async (dtoIn, authenticatedUser) => {
             ownerId: authenticatedUser.id,
             name: dtoIn.name,
             apiKey: generateApiKey(),
-            status: 'active',
-            lastSeen: new Date()
+            status: 'offline',
+            lastSeen: null
         };
 
         const gateway = new gatewayModel(newGatewayData);
         const savedGateway = await gateway.save();
 
         const dtoOut = savedGateway.toJSON();
-        dtoOut.lastSeen = dtoOut.lastSeen.toISOString();
 
         return dtoOut;
     } catch (error) {
